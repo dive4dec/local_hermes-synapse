@@ -181,7 +181,10 @@ UPLOAD_FILE_SCHEMA = {
         "Upload a file to a Moodle course as a resource (file resource). "
         "Requires teacher/manager role. Uses Moodle's file API via a PHP helper script. "
         "Parameters: course_id (int), file_path (str, absolute path to the file), "
-        "display_name (str, optional name shown in Moodle)."
+        "display_name (str, optional name shown in Moodle), "
+        "visible (bool, optional, default false — upload hidden so only teachers "
+        "can see it; set true only when the user explicitly asks to publish/show "
+        "it to students)."
     ),
     "parameters": {
         "type": "object",
@@ -197,6 +200,10 @@ UPLOAD_FILE_SCHEMA = {
             "display_name": {
                 "type": "string",
                 "description": "Display name in Moodle (defaults to filename)",
+            },
+            "visible": {
+                "type": "boolean",
+                "description": "Whether the resource is visible to students (default false — hidden, teachers only)",
             },
         },
         "required": ["course_id", "file_path"],
@@ -233,6 +240,9 @@ def _handle_upload_file(args: dict, **kwargs) -> str:
     course_id = args.get("course_id")
     file_path = args.get("file_path", "")
     display_name = args.get("display_name") or os.path.basename(file_path)
+    # Default to hidden (visible=0) so solution files etc. are only
+    # accessible to teachers until explicitly published.
+    visible = 1 if args.get("visible") else 0
 
     if not course_id or not file_path:
         return json.dumps({"error": "course_id and file_path are required"})
@@ -260,6 +270,7 @@ $courseid = {course_id};
 $filepath = '{file_path}';
 $displayname = '{display_name}';
 $userid = {user['id']};
+$visible = {visible};
 
 // 1. Create the resource instance
 $resource = new stdClass();
@@ -270,14 +281,14 @@ $resource->timemodified = time();
 $resource->timecreated = time();
 $resource->id = $DB->insert_record('resource', $resource);
 
-// 2. Create the course module
+// 2. Create the course module (hidden by default — teachers only)
 $moduleid = $DB->get_field('modules', 'id', array('name' => 'resource'));
 $cm = new stdClass();
 $cm->course = $courseid;
 $cm->module = $moduleid;
 $cm->instance = $resource->id;
 $cm->section = 0;
-$cm->visible = 1;
+$cm->visible = $visible;
 $cm->added = time();
 $cm->id = $DB->insert_record('course_modules', $cm);
 
@@ -304,6 +315,7 @@ echo json_encode(array(
     'file_id' => $storedfile->get_id(),
     'name' => $displayname,
     'course' => $courseid,
+    'visible' => $visible,
 ));
 """
 
