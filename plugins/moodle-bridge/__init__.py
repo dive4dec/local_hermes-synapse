@@ -252,6 +252,16 @@ def _handle_upload_file(args: dict, **kwargs) -> str:
     if not user:
         return json.dumps({"error": "No Moodle user identified for this session"})
 
+    # The stored filename must include the original file's extension so
+    # Moodle can determine the MIME type and serve it via pluginfile.php.
+    # The display_name is used for the resource title only.
+    src_filename = os.path.basename(file_path)
+    src_ext = os.path.splitext(src_filename)[1]  # e.g. ".pdf"
+    if src_ext and not display_name.lower().endswith(src_ext.lower()):
+        stored_filename = display_name + src_ext
+    else:
+        stored_filename = display_name
+
     # Write a PHP helper that creates a resource module + stores the file.
     # We avoid add_moduleinfo() — it's fragile in CLI mode and needs many
     # fields.  Instead we create the records directly and let Moodle's
@@ -269,6 +279,7 @@ require_once($CFG->dirroot . '/course/lib.php');
 $courseid = {course_id};
 $filepath = '{file_path}';
 $displayname = '{display_name}';
+$storedfilename = '{stored_filename}';
 $userid = {user['id']};
 $visible = {visible};
 
@@ -276,7 +287,7 @@ $visible = {visible};
 $resource = new stdClass();
 $resource->course = $courseid;
 $resource->name = $displayname;
-$resource->displayoptions = 'a:1:{{s:10:"display";s:6:"inline";}}';
+$resource->displayoptions = serialize(array("display" => "inline"));
 $resource->timemodified = time();
 $resource->timecreated = time();
 $resource->id = $DB->insert_record('resource', $resource);
@@ -296,15 +307,17 @@ $cm->id = $DB->insert_record('course_modules', $cm);
 course_add_cm_to_section($courseid, $cm->id, 0);
 
 // 4. Store the file in the module's context
+// NOTE: Moodle's mod_resource view.php looks for files with itemid=0,
+// not the resource instance id. Using itemid=0 is the correct convention.
 $context = context_module::instance($cm->id);
 $fs = get_file_storage();
 $filerecord = array(
     'contextid' => $context->id,
     'component' => 'mod_resource',
     'filearea' => 'content',
-    'itemid' => $resource->id,
+    'itemid' => 0,
     'filepath' => '/',
-    'filename' => $displayname,
+    'filename' => $storedfilename,
     'userid' => $userid,
 );
 $storedfile = $fs->create_file_from_pathname($filerecord, $filepath);
@@ -314,6 +327,7 @@ echo json_encode(array(
     'resource_id' => $resource->id,
     'file_id' => $storedfile->get_id(),
     'name' => $displayname,
+    'filename' => $storedfilename,
     'course' => $courseid,
     'visible' => $visible,
 ));
