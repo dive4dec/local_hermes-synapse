@@ -149,9 +149,8 @@ def _get_current_user() -> Optional[dict]:
         user = _query_user_by_username(username)
         if user:
             return user
-        # Fallback: construct minimal user from identity file
-        if userid:
-            return {"id": userid, "username": username, "firstname": "", "lastname": ""}
+        # DB lookup failed — username doesn't exist
+        logger.warning("Moodle user '%s' not found in database", username)
         return None
     except Exception as e:
         logger.warning("Failed to read moodle identity: %s", e)
@@ -243,56 +242,69 @@ def _handle_upload_file(args: dict, **kwargs) -> str:
     if not user:
         return json.dumps({"error": "No Moodle user identified for this session"})
 
-    # Write a small PHP helper that uses Moodle's file API
+    # Write a PHP helper that creates a resource module + stores the file.
+    # We avoid add_moduleinfo() — it's fragile in CLI mode and needs many
+    # fields.  Instead we create the records directly and let Moodle's
+    # file storage handle the actual file.
+    config_path = os.environ.get("MOODLE_CONFIG_PATH", "/var/www/html/config.php")
     php_script = f"""<?php
 define('CLI_SCRIPT', true);
 $_SERVER['REQUEST_URI'] = '/edb/';
 $_SERVER['SCRIPT_NAME'] = '/edb/admin/cli/foo.php';
-require_once('{os.environ.get("MOODLE_CONFIG_PATH", "/var/www/html/public/config.php")}');
+require_once('{config_path}');
 global $CFG, $DB;
 require_once($CFG->libdir . '/filelib.php');
+require_once($CFG->dirroot . '/course/lib.php');
 
 $courseid = {course_id};
 $filepath = '{file_path}';
 $displayname = '{display_name}';
 $userid = {user['id']};
 
-$context = context_course::instance($courseid);
-$fs = get_file_storage();
+// 1. Create the resource instance
+$resource = new stdClass();
+$resource->course = $courseid;
+$resource->name = $displayname;
+$resource->displayoptions = 'a:1:{{s:10:"display";s:6:"inline";}}';
+$resource->timemodified = time();
+$resource->timecreated = time();
+$resource->id = $DB->insert_record('resource', $resource);
 
+// 2. Create the course module
+$moduleid = $DB->get_field('modules', 'id', array('name' => 'resource'));
+$cm = new stdClass();
+$cm->course = $courseid;
+$cm->module = $moduleid;
+$cm->instance = $resource->id;
+$cm->section = 0;
+$cm->visible = 1;
+$cm->added = time();
+$cm->id = $DB->insert_record('course_modules', $cm);
+
+// 3. Add to course section
+course_add_cm_to_section($courseid, $cm->id, 0);
+
+// 4. Store the file in the module's context
+$context = context_module::instance($cm->id);
+$fs = get_file_storage();
 $filerecord = array(
     'contextid' => $context->id,
     'component' => 'mod_resource',
     'filearea' => 'content',
-    'itemid' => 0,
+    'itemid' => $resource->id,
     'filepath' => '/',
     'filename' => $displayname,
     'userid' => $userid,
 );
+$storedfile = $fs->create_file_from_pathname($filerecord, $filepath);
 
-// Create the course module
-$cm = new stdClass();
-$cm->course = $courseid;
-$cm->module = $DB->get_field('modules', 'id', array('name' => 'resource'));
-$cm->section = 0;
-$cm->instance = 0;
-$cm->name = $displayname;
-$cm->visible = 1;
-$cm->add = 'resource';
-
-require_once($CFG->dirroot . '/course/modlib.php');
-$moduleinfo = new stdClass();
-$moduleinfo->course = $courseid;
-$moduleinfo->module = $DB->get_field('modules', 'id', array('name' => 'resource'));
-$moduleinfo->modulename = 'resource';
-$moduleinfo->section = 0;
-$moduleinfo->name = $displayname;
-$moduleinfo->visible = 1;
-$moduleinfo->files = $filepath;
-
-list($cm, $instance) = add_moduleinfo($moduleinfo, $DB->get_record('course', array('id' => $courseid)));
-
-echo json_encode(array('cmid' => $cm->id, 'name' => $displayname, 'course' => $courseid));
+echo json_encode(array(
+    'cmid' => $cm->id,
+    'resource_id' => $resource->id,
+    'file_id' => $storedfile->get_id(),
+    'name' => $displayname,
+    'course' => $courseid,
+));
 """
 
     try:
@@ -330,11 +342,13 @@ def register(ctx) -> None:
     # bridge before each prompt) — no on_session_start hook needed.
     ctx.register_tool(
         name="moodle_get_my_courses",
+        toolset="moodle",
         schema=GET_MY_COURSES_SCHEMA,
         handler=_handle_get_my_courses,
     )
     ctx.register_tool(
         name="moodle_upload_file",
+        toolset="moodle",
         schema=UPLOAD_FILE_SCHEMA,
         handler=_handle_upload_file,
     )
