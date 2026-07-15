@@ -51,41 +51,16 @@ function esc($s) { return htmlspecialchars($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 function fmt($raw, $format) { return latex_to_html(format_text($raw, $format, ['noclean' => true, 'filter' => false])); }
 
 /**
- * Convert LaTeX math to inline SVG via MathJax (server-side, Node.js).
- * Falls back to Unicode if MathJax unavailable. See solutions-template.md.
+ * Convert LaTeX math delimiters to HTML/Unicode for dompdf (which cannot
+ * run JavaScript/MathJax).  See solutions-template.md for full documentation.
  */
 function latex_to_html($html) {
     $html = str_replace(['&#92;', '&#42;'], ['\\', '*'], $html);
-    $inline_exprs = []; $display_exprs = [];
-    $html = preg_replace_callback('/\$\$(.*?)\$\$/s', function($m) use (&$display_exprs) {
-        $display_exprs[] = trim($m[1]); return "\x00D" . (count($display_exprs) - 1) . "\x00";
+    $html = preg_replace_callback('/\$\$(.*?)\$\$/s', function($m) {
+        return '<div style="text-align:center;margin:6px 0">' . latex_to_unicode($m[1]) . '</div>';
     }, $html);
-    $html = preg_replace_callback('/\\\\\((.*?)\\\\\)/s', function($m) use (&$inline_exprs) {
-        $inline_exprs[] = trim($m[1]); return "\x00I" . (count($inline_exprs) - 1) . "\x00";
-    }, $html);
-    $svgs = ['inline' => [], 'display' => []];
-    if (!empty($inline_exprs) || !empty($display_exprs)) {
-        $renderScript = '/var/www/moodledata/.hermes/lib/mathjax-svg/render.js';
-        if (file_exists($renderScript)) {
-            $payload = json_encode(['inline' => $inline_exprs, 'display' => $display_exprs]);
-            $cmd = sprintf('echo %s | node %s 2>&1', escapeshellarg($payload), escapeshellarg($renderScript));
-            $decoded = json_decode(@shell_exec($cmd), true);
-            if ($decoded && isset($decoded['inline'])) { $svgs = $decoded; }
-        }
-    }
-    $html = preg_replace_callback('/\x00D(\d+)\x00/', function($m) use ($svgs, $display_exprs) {
-        $idx = (int)$m[1];
-        if (isset($svgs['display'][$idx]) && strpos($svgs['display'][$idx], '<svg') !== false) {
-            return '<div style="text-align:center;margin:6px 0">' . $svgs['display'][$idx] . '</div>';
-        }
-        return '<div style="text-align:center;margin:6px 0">' . latex_to_unicode($display_exprs[$idx] ?? '') . '</div>';
-    }, $html);
-    $html = preg_replace_callback('/\x00I(\d+)\x00/', function($m) use ($svgs, $inline_exprs) {
-        $idx = (int)$m[1];
-        if (isset($svgs['inline'][$idx]) && strpos($svgs['inline'][$idx], '<svg') !== false) {
-            return $svgs['inline'][$idx];
-        }
-        return '<span style="font-style:italic">' . latex_to_unicode($inline_exprs[$idx] ?? '') . '</span>';
+    $html = preg_replace_callback('/\\\\\((.*?)\\\\\)/s', function($m) {
+        return '<span style="font-style:italic">' . latex_to_unicode($m[1]) . '</span>';
     }, $html);
     return $html;
 }

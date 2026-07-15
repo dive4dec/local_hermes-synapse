@@ -49,108 +49,100 @@ function esc($s) { return htmlspecialchars($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 function fmt($raw, $format) { return latex_to_html(format_text($raw, $format, ['noclean' => true, 'filter' => false])); }
 
 /**
- * Convert LaTeX math delimiters to inline SVG using MathJax server-side.
- * dompdf cannot run JavaScript, so MathJax must be pre-rendered via Node.js.
- *
- * Handles:
- *   \( ... \)  (inline math)  → inline <svg>
- *   $$ ... $$  (display math, centered)  → centered <svg>
- *
- * Pipeline: PHP extracts LaTeX → Node.js (mathjax-full) renders SVG → inline in HTML
+ * Convert LaTeX math delimiters to HTML/Unicode for dompdf (which cannot
+ * run JavaScript/MathJax).  Handles:
+ *   \( ... \)  (inline math)
+ *   $$ ... $$  (display math, centered)
  *
  * NOTE: format_text() with filter=false HTML-escapes backslashes to &#92;
  * and asterisks to &#42;.  We decode those entities BEFORE matching LaTeX
  * delimiters, otherwise \( becomes &#92;( and won't match.
  *
- * Falls back to latex_to_unicode() if Node.js/MathJax is unavailable.
+ * CSS MUST use font-family: "DejaVu Sans" — dompdf bundles this TTF and
+ * it supports Unicode math glyphs (π, ≤, ≥, ⋯, etc.).  Helvetica fallback
+ * shows ? for these characters.
  */
 function latex_to_html($html) {
     // 1. Decode HTML entities that mask LaTeX delimiters
     $html = str_replace(['&#92;', '&#42;'], ['\\', '*'], $html);
 
-    // 2. Collect all math expressions (batch-render for efficiency)
-    $inline_exprs = [];
-    $display_exprs = [];
-
-    // Extract display math: $$ ... $$
-    $html = preg_replace_callback('/\$\$(.*?)\$\$/s', function($m) use (&$display_exprs) {
-        $display_exprs[] = trim($m[1]);
-        return "\x00D" . (count($display_exprs) - 1) . "\x00";
+    // 2. Convert display math: $$ ... $$
+    $html = preg_replace_callback('/\$\$(.*?)\$\$/s', function($m) {
+        return '<div style="text-align:center;margin:6px 0">' . latex_to_unicode($m[1]) . '</div>';
     }, $html);
 
-    // Extract inline math: \( ... \)
-    $html = preg_replace_callback('/\\\\\((.*?)\\\\\)/s', function($m) use (&$inline_exprs) {
-        $inline_exprs[] = trim($m[1]);
-        return "\x00I" . (count($inline_exprs) - 1) . "\x00";
-    }, $html);
-
-    // 3. Batch-render all expressions via Node.js MathJax
-    $svgs = ['inline' => [], 'display' => []];
-    if (!empty($inline_exprs) || !empty($display_exprs)) {
-        $renderScript = '/var/www/moodledata/.hermes/lib/mathjax-svg/render.js';
-        if (is_executable($renderScript) || file_exists($renderScript)) {
-            $payload = json_encode(['inline' => $inline_exprs, 'display' => $display_exprs]);
-            $cmd = sprintf('echo %s | node %s 2>&1', escapeshellarg($payload), escapeshellarg($renderScript));
-            $output = @shell_exec($cmd);
-            $decoded = json_decode($output, true);
-            if ($decoded && isset($decoded['inline'])) {
-                $svgs = $decoded;
-            }
-        }
-    }
-
-    // 4. Replace placeholders with SVGs (or Unicode fallback)
-    // Display math
-    $html = preg_replace_callback('/\x00D(\d+)\x00/', function($m) use ($svgs, $display_exprs) {
-        $idx = (int)$m[1];
-        if (isset($svgs['display'][$idx]) && strpos($svgs['display'][$idx], '<svg') !== false) {
-            return '<div style="text-align:center;margin:6px 0">' . $svgs['display'][$idx] . '</div>';
-        }
-        return '<div style="text-align:center;margin:6px 0">' . latex_to_unicode($display_exprs[$idx] ?? '') . '</div>';
-    }, $html);
-
-    // Inline math
-    $html = preg_replace_callback('/\x00I(\d+)\x00/', function($m) use ($svgs, $inline_exprs) {
-        $idx = (int)$m[1];
-        if (isset($svgs['inline'][$idx]) && strpos($svgs['inline'][$idx], '<svg') !== false) {
-            return $svgs['inline'][$idx];
-        }
-        return '<span style="font-style:italic">' . latex_to_unicode($inline_exprs[$idx] ?? '') . '</span>';
+    // 3. Convert inline math: \( ... \)
+    $html = preg_replace_callback('/\\\\\((.*?)\\\\\)/s', function($m) {
+        return '<span style="font-style:italic">' . latex_to_unicode($m[1]) . '</span>';
     }, $html);
 
     return $html;
 }
 
 /**
- * Unicode fallback: convert common LaTeX commands to Unicode characters.
- * Used only when MathJax SVG rendering is unavailable.
+ * Convert common LaTeX commands to Unicode characters.
+ * Handles symbols typically found in CS/math quiz questions.
  */
 function latex_to_unicode($latex) {
     $latex = trim($latex);
     $replacements = [
         '/\\\\frac\{([^{}]+)\}\{([^{}]+)\}/' => '$1/$2',
-        '/\\\\left\(/' => '(', '/\\\\right\)/' => ')',
-        '/\\\\left\|/' => '|', '/\\\\right\|/' => '|',
-        '/\\\\cdots/' => '⋯', '/\\\\ldots/' => '…', '/\\\\vdots/' => '⋮', '/\\\\dots/' => '…',
-        '/\\\\leq/' => '≤', '/\\\\geq/' => '≥', '/\\\\neq/' => '≠',
-        '/\\\\approx/' => '≈', '/\\\\equiv/' => '≡',
-        '/\\\\pi/' => 'π', '/\\\\alpha/' => 'α', '/\\\\beta/' => 'β',
-        '/\\\\gamma/' => 'γ', '/\\\\delta/' => 'δ', '/\\\\theta/' => 'θ',
-        '/\\\\lambda/' => 'λ', '/\\\\mu/' => 'μ', '/\\\\sigma/' => 'σ',
-        '/\\\\omega/' => 'ω', '/\\\\Sigma/' => 'Σ', '/\\\\Delta/' => 'Δ', '/\\\\Omega/' => 'Ω',
-        '/\\\\rightarrow/' => '→', '/\\\\leftarrow/' => '←',
-        '/\\\\Rightarrow/' => '⇒', '/\\\\Leftarrow/' => '⇐', '/\\\\mapsto/' => '↦',
-        '/\\\\in/' => '∈', '/\\\\notin/' => '∉', '/\\\\subset/' => '⊂',
-        '/\\\\subseteq/' => '⊆', '/\\\\supset/' => '⊃', '/\\\\cup/' => '∪', '/\\\\cap/' => '∩',
-        '/\\\\emptyset/' => '∅', '/\\\\infty/' => '∞',
-        '/\\\\times/' => '×', '/\\\\div/' => '÷', '/\\\\pm/' => '±', '/\\\\mp/' => '∓',
-        '/\\\\cdot/' => '·', '/\\\\sum/' => '∑', '/\\\\prod/' => '∏', '/\\\\int/' => '∫',
+        '/\\\\left\(/' => '(',
+        '/\\\\right\)/' => ')',
+        '/\\\\left\|/' => '|',
+        '/\\\\right\|/' => '|',
+        '/\\\\cdots/' => '⋯',
+        '/\\\\ldots/' => '…',
+        '/\\\\vdots/' => '⋮',
+        '/\\\\dots/' => '…',
+        '/\\\\leq/' => '≤',
+        '/\\\\geq/' => '≥',
+        '/\\\\neq/' => '≠',
+        '/\\\\approx/' => '≈',
+        '/\\\\equiv/' => '≡',
+        '/\\\\pi/' => 'π',
+        '/\\\\alpha/' => 'α',
+        '/\\\\beta/' => 'β',
+        '/\\\\gamma/' => 'γ',
+        '/\\\\delta/' => 'δ',
+        '/\\\\theta/' => 'θ',
+        '/\\\\lambda/' => 'λ',
+        '/\\\\mu/' => 'μ',
+        '/\\\\sigma/' => 'σ',
+        '/\\\\omega/' => 'ω',
+        '/\\\\Sigma/' => 'Σ',
+        '/\\\\Delta/' => 'Δ',
+        '/\\\\Omega/' => 'Ω',
+        '/\\\\rightarrow/' => '→',
+        '/\\\\leftarrow/' => '←',
+        '/\\\\Rightarrow/' => '⇒',
+        '/\\\\Leftarrow/' => '⇐',
+        '/\\\\mapsto/' => '↦',
+        '/\\\\in/' => '∈',
+        '/\\\\notin/' => '∉',
+        '/\\\\subset/' => '⊂',
+        '/\\\\subseteq/' => '⊆',
+        '/\\\\supset/' => '⊃',
+        '/\\\\cup/' => '∪',
+        '/\\\\cap/' => '∩',
+        '/\\\\emptyset/' => '∅',
+        '/\\\\infty/' => '∞',
+        '/\\\\times/' => '×',
+        '/\\\\div/' => '÷',
+        '/\\\\pm/' => '±',
+        '/\\\\mp/' => '∓',
+        '/\\\\cdot/' => '·',
+        '/\\\\sum/' => '∑',
+        '/\\\\prod/' => '∏',
+        '/\\\\int/' => '∫',
         '/\\\\sqrt\{([^{}]+)\}/' => '√($1)',
     ];
     foreach ($replacements as $pattern => $replacement) {
         $latex = preg_replace($pattern, $replacement, $latex);
     }
+    // Strip remaining backslash-letter sequences (e.g. \foo → foo)
     $latex = preg_replace('/\\\\([a-zA-Z]+)/', '$1', $latex);
+    // Clean up escaped asterisks and backslashes
     $latex = str_replace(['\\*', '\\\\'], ['*', '\\'], $latex);
     return $latex;
 }
