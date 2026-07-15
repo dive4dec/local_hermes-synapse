@@ -46,7 +46,106 @@ $course = $DB->get_record('course', ['id' => $qrec->course], 'fullname, shortnam
 $coursefull = $course->fullname;
 
 function esc($s) { return htmlspecialchars($s, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }
-function fmt($raw, $format) { return format_text($raw, $format, ['noclean' => true, 'filter' => false]); }
+function fmt($raw, $format) { return latex_to_html(format_text($raw, $format, ['noclean' => true, 'filter' => false])); }
+
+/**
+ * Convert LaTeX math delimiters to HTML/Unicode for dompdf (which cannot
+ * run JavaScript/MathJax).  Handles:
+ *   \( ... \)  (inline math)
+ *   $$ ... $$  (display math, centered)
+ *
+ * NOTE: format_text() with filter=false HTML-escapes backslashes to &#92;
+ * and asterisks to &#42;.  We decode those entities BEFORE matching LaTeX
+ * delimiters, otherwise \( becomes &#92;( and won't match.
+ *
+ * This is a lightweight converter for CS quiz math.  For full LaTeX
+ * rendering (complex fractions, matrices, etc.) a browser-based pipeline
+ * (wkhtmltopdf + MathJax) would be needed.
+ */
+function latex_to_html($html) {
+    // 1. Decode HTML entities that mask LaTeX delimiters
+    $html = str_replace(['&#92;', '&#42;'], ['\\', '*'], $html);
+
+    // 2. Convert display math: $$ ... $$
+    $html = preg_replace_callback('/\$\$(.*?)\$\$/s', function($m) {
+        return '<div style="text-align:center;margin:6px 0">' . latex_to_unicode($m[1]) . '</div>';
+    }, $html);
+
+    // 3. Convert inline math: \( ... \)
+    $html = preg_replace_callback('/\\\\\((.*?)\\\\\)/s', function($m) {
+        return '<span style="font-style:italic">' . latex_to_unicode($m[1]) . '</span>';
+    }, $html);
+
+    return $html;
+}
+
+/**
+ * Convert common LaTeX commands to Unicode characters.
+ * Handles symbols typically found in CS/math quiz questions.
+ */
+function latex_to_unicode($latex) {
+    $latex = trim($latex);
+    $replacements = [
+        '/\\\\frac\{([^{}]+)\}\{([^{}]+)\}/' => '$1/$2',
+        '/\\\\left\(/' => '(',
+        '/\\\\right\)/' => ')',
+        '/\\\\left\|/' => '|',
+        '/\\\\right\|/' => '|',
+        '/\\\\cdots/' => '⋯',
+        '/\\\\ldots/' => '…',
+        '/\\\\vdots/' => '⋮',
+        '/\\\\dots/' => '…',
+        '/\\\\leq/' => '≤',
+        '/\\\\geq/' => '≥',
+        '/\\\\neq/' => '≠',
+        '/\\\\approx/' => '≈',
+        '/\\\\equiv/' => '≡',
+        '/\\\\pi/' => 'π',
+        '/\\\\alpha/' => 'α',
+        '/\\\\beta/' => 'β',
+        '/\\\\gamma/' => 'γ',
+        '/\\\\delta/' => 'δ',
+        '/\\\\theta/' => 'θ',
+        '/\\\\lambda/' => 'λ',
+        '/\\\\mu/' => 'μ',
+        '/\\\\sigma/' => 'σ',
+        '/\\\\omega/' => 'ω',
+        '/\\\\Sigma/' => 'Σ',
+        '/\\\\Delta/' => 'Δ',
+        '/\\\\Omega/' => 'Ω',
+        '/\\\\rightarrow/' => '→',
+        '/\\\\leftarrow/' => '←',
+        '/\\\\Rightarrow/' => '⇒',
+        '/\\\\Leftarrow/' => '⇐',
+        '/\\\\mapsto/' => '↦',
+        '/\\\\in/' => '∈',
+        '/\\\\notin/' => '∉',
+        '/\\\\subset/' => '⊂',
+        '/\\\\subseteq/' => '⊆',
+        '/\\\\supset/' => '⊃',
+        '/\\\\cup/' => '∪',
+        '/\\\\cap/' => '∩',
+        '/\\\\emptyset/' => '∅',
+        '/\\\\infty/' => '∞',
+        '/\\\\times/' => '×',
+        '/\\\\div/' => '÷',
+        '/\\\\pm/' => '±',
+        '/\\\\mp/' => '∓',
+        '/\\\\cdot/' => '·',
+        '/\\\\sum/' => '∑',
+        '/\\\\prod/' => '∏',
+        '/\\\\int/' => '∫',
+        '/\\\\sqrt\{([^{}]+)\}/' => '√($1)',
+    ];
+    foreach ($replacements as $pattern => $replacement) {
+        $latex = preg_replace($pattern, $replacement, $latex);
+    }
+    // Strip remaining backslash-letter sequences (e.g. \foo → foo)
+    $latex = preg_replace('/\\\\([a-zA-Z]+)/', '$1', $latex);
+    // Clean up escaped asterisks and backslashes
+    $latex = str_replace(['\\*', '\\\\'], ['*', '\\'], $latex);
+    return $latex;
+}
 
 $letter = range('A', 'Z');
 $qhtml = '';
@@ -106,7 +205,7 @@ foreach ($rows as $r) {
         }
     }
     // Compute dynamic values BEFORE the heredoc (avoids the heredoc PHP trap).
-    $stem_html = preg_replace('/\\[\\[\\d+\\]\\]/', '<span class="blank"></span>', fmt($r->questiontext, $r->questiontextformat));
+    $stem_html = preg_replace('/\[\[\d+\]\]/', '<span class="blank"></span>', fmt($r->questiontext, $r->questiontextformat));
     $name_html = fmt($r->name, 0);
     $qhtml .= <<<HTML
   <section class="que {$r->qtype}">

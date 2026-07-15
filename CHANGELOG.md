@@ -60,3 +60,20 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/).
   file-based identity reading: the Moodle plugin writes
   `moodle-identity.json` during bridge startup, and the plugin reads it
   on demand.
+
+### Fixed
+
+#### LaTeX math rendering in PDFs
+- **dompdf cannot run JavaScript**, so Moodle's MathJax filter (which wraps
+  math in a `<span>` and relies on browser-side JS) doesn't work in PDF
+  generation. Math delimiters `\( ... \)` and `$$ ... $$` showed as raw
+  text.
+- Added `latex_to_html()` + `latex_to_unicode()` server-side converters to
+  both `solutions-template.md` and `html-preview-template.md`. Converts
+  LaTeX delimiters to Unicode characters (≤, ≥, π, ⋯, ×, →, ∑, √, etc.)
+  before passing HTML to dompdf.
+- Key insight: `format_text()` with `filter => false` HTML-escapes
+  backslashes to `&#92;` — must decode entities **before** matching LaTeX
+  delimiters.
+- Verified: iRAT 3 Q16 (Leibniz π formula) and Q17 (factorial, `1 ≤ n ≤ 20`)
+  now render correctly. Zero raw LaTeX delimiters remain in output.

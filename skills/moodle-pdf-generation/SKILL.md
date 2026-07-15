@@ -128,6 +128,8 @@ Full working generator: `references/solutions-template.md`.
 - **Never hardcode the course/subtitle name on the cover — look it up from the DB.** Resolve via the quiz: `$qrec = $DB->get_record('quiz', ['id' => $quizid], 'course'); $course = $DB->get_record('course', ['id' => $qrec->course], 'fullname');` then print `{$course->fullname}`.
 - **Question-title omission (student paper):** The student version must NOT show the internal Moodle question `q.name` — show only `Question N` + mark. The SOLUTIONS/instructor version MAY keep `q.name` as a reference.
 - **Cover mark rounding:** the question header `defaultmark` from the DB is a full float (e.g. `1.0000000`). Render it as the **raw value** `{$r->defaultmark} mark` — do NOT reformat. Test-case `Mark` column stays 3 dp (`1.000`).
+- **⚠️ LaTeX math in PDFs:** Moodle stores math as `\( ... \)` (inline) and `$$ ... $$` (display) delimiters. The MathJax filter wraps these in a `<span>` but relies on **browser-side JavaScript** to render — dompdf cannot run JS, so the math shows as raw `\( ... \)` text. The `fmt()` function in the templates applies `latex_to_html()` which converts LaTeX delimiters to **Unicode characters** (≤, ≥, π, ⋯, ×, →, ∑, etc.) server-side. This handles the common symbols in CS quiz questions. For complex LaTeX (matrices, multi-line equations), a browser-based pipeline (wkhtmltopdf + MathJax) would be needed.
+- **`format_text()` HTML-escapes LaTeX:** with `filter => false`, `format_text()` turns `\(` into `&#92;(` and `*` into `&#42;`. The `latex_to_html()` function decodes these entities **before** matching LaTeX delimiters.
 
 ## References
 

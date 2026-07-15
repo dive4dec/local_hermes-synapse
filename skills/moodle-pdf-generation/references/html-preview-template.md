@@ -48,7 +48,49 @@ $course = $DB->get_record('course', ['id' => $qrec->course], 'fullname, shortnam
 $coursefull = $course->fullname;
 
 function esc($s) { return htmlspecialchars($s, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }
-function fmt($raw, $format) { return format_text($raw, $format, ['noclean' => true, 'filter' => false]); }
+function fmt($raw, $format) { return latex_to_html(format_text($raw, $format, ['noclean' => true, 'filter' => false])); }
+
+/**
+ * Convert LaTeX math delimiters to HTML/Unicode for dompdf (which cannot
+ * run JavaScript/MathJax).  See solutions-template.md for full documentation.
+ */
+function latex_to_html($html) {
+    $html = str_replace(['&#92;', '&#42;'], ['\\', '*'], $html);
+    $html = preg_replace_callback('/\$\$(.*?)\$\$/s', function($m) {
+        return '<div style="text-align:center;margin:6px 0">' . latex_to_unicode($m[1]) . '</div>';
+    }, $html);
+    $html = preg_replace_callback('/\\\\\((.*?)\\\\\)/s', function($m) {
+        return '<span style="font-style:italic">' . latex_to_unicode($m[1]) . '</span>';
+    }, $html);
+    return $html;
+}
+function latex_to_unicode($latex) {
+    $latex = trim($latex);
+    $replacements = [
+        '/\\\\frac\{([^{}]+)\}\{([^{}]+)\}/' => '$1/$2',
+        '/\\\\left\(/' => '(', '/\\\\right\)/' => ')',
+        '/\\\\left\|/' => '|', '/\\\\right\|/' => '|',
+        '/\\\\cdots/' => '⋯', '/\\\\ldots/' => '…', '/\\\\dots/' => '…',
+        '/\\\\leq/' => '≤', '/\\\\geq/' => '≥', '/\\\\neq/' => '≠',
+        '/\\\\approx/' => '≈', '/\\\\equiv/' => '≡',
+        '/\\\\pi/' => 'π', '/\\\\alpha/' => 'α', '/\\\\beta/' => 'β',
+        '/\\\\gamma/' => 'γ', '/\\\\delta/' => 'δ', '/\\\\theta/' => 'θ',
+        '/\\\\lambda/' => 'λ', '/\\\\mu/' => 'μ', '/\\\\sigma/' => 'σ',
+        '/\\\\omega/' => 'ω', '/\\\\Sigma/' => 'Σ', '/\\\\Delta/' => 'Δ',
+        '/\\\\rightarrow/' => '→', '/\\\\leftarrow/' => '←',
+        '/\\\\Rightarrow/' => '⇒', '/\\\\Leftarrow/' => '⇐',
+        '/\\\\in/' => '∈', '/\\\\notin/' => '∉', '/\\\\subset/' => '⊂',
+        '/\\\\subseteq/' => '⊆', '/\\\\cup/' => '∪', '/\\\\cap/' => '∩',
+        '/\\\\emptyset/' => '∅', '/\\\\infty/' => '∞',
+        '/\\\\times/' => '×', '/\\\\div/' => '÷', '/\\\\pm/' => '±',
+        '/\\\\cdot/' => '·', '/\\\\sum/' => '∑', '/\\\\int/' => '∫',
+        '/\\\\sqrt\{([^{}]+)\}/' => '√($1)',
+    ];
+    foreach ($replacements as $p => $r) { $latex = preg_replace($p, $r, $latex); }
+    $latex = preg_replace('/\\\\([a-zA-Z]+)/', '$1', $latex);
+    $latex = str_replace(['\\*', '\\\\'], ['*', '\\'], $latex);
+    return $latex;
+}
 
 $letter = range('A', 'Z');
 $qhtml = '';
