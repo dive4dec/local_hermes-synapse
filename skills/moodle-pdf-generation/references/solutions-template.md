@@ -231,7 +231,7 @@ $html = <<<HTML
 <style>
   @page { size: A4; margin: 16mm 14mm; }
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:#1a1a1a; margin:0; }
+  body { font-family: "DejaVu Sans", sans-serif; color:#1a1a1a; margin:0; }
   .toolbar { position: sticky; top:0; background:#fff; border-bottom:1px solid #ddd; padding:8px 14px; z-index:99; }
   .toolbar button { font-size:14px; padding:8px 16px; background:#0a58ca; color:#fff; border:0; border-radius:4px; cursor:pointer; }
   .cover { text-align:center; padding:40px 0 20px; }
@@ -248,7 +248,7 @@ $html = <<<HTML
   .qstem > p:first-child, .qcontent p:first-child { margin-top:0; }
   .qstem > p:last-child, .qcontent p:last-child { margin-bottom:0; }
   .qstem p, .qcontent p { margin:0 0 6px; line-height:1.5; }
-  .qstem code, .qcontent code { background:#eef1f4; padding:1px 4px; border-radius:3px; font-family:"Courier New",monospace; font-size:0.92em; white-space:pre-wrap; word-break:break-word; }
+  .qstem code, .qcontent code { background:#eef1f4; padding:1px 4px; border-radius:3px; font-family:"DejaVu Sans Mono", monospace; font-size:0.92em; white-space:pre-wrap; word-break:break-word; }
   .qstem ul, .qstem ol, .qcontent ul, .qcontent ol { margin:4px 0 6px; padding-left:22px; }
   .qcontent { font-size:13px; }
   .opt { padding:4px 0; line-height:1.45; }
@@ -262,14 +262,14 @@ $html = <<<HTML
   .orderlist li p { display:inline; margin:0; }
   .orderlist.solution li { background:#e8f6ec; border-radius:3px; padding:3px 6px; margin:2px 0; }
   .blank { display:inline-block; min-width:60px; border-bottom:1px solid #333; margin:0 2px; }
-  pre.code { background:#f6f6f6; border:1px solid #e0e0e0; border-radius:4px; padding:10px; font-family:"Courier New",monospace; font-size:12px; white-space:pre-wrap; word-break:break-word; line-height:1.4; margin:6px 0 10px; page-break-inside:avoid; }
+  pre.code { background:#f6f6f6; border:1px solid #e0e0e0; border-radius:4px; padding:10px; font-family:"DejaVu Sans Mono", monospace; font-size:12px; white-space:pre-wrap; word-break:break-word; line-height:1.4; margin:6px 0 10px; page-break-inside:avoid; }
   pre.code.solution { background:#f0fbf3; border-color:#a9d9b8; }
   .cr-label { font-weight:700; font-size:12px; color:#444; margin:10px 0 3px; }
   .cr-label.sol { color:#2e7d43; }
   table.tests { width:100%; border-collapse:collapse; font-size:10.5px; margin:4px 0 8px; }
   table.tests th, table.tests td { border:1px solid #ccc; padding:4px 6px; text-align:left; vertical-align:top; }
   table.tests th { background:#eef2f8; }
-  table.tests pre { margin:0; font-family:"Courier New",monospace; font-size:10px; white-space:pre-wrap; word-break:break-word; }
+  table.tests pre { margin:0; font-family:"DejaVu Sans Mono", monospace; font-size:10px; white-space:pre-wrap; word-break:break-word; }
   table.tests tr.vhide { background:#fff5f5; }
   table.tests tr.vhide td:nth-child(2) { color:#c0392b; font-weight:700; }
   table.tests tr.vshow td:nth-child(2) { color:#2e7d43; font-weight:700; }

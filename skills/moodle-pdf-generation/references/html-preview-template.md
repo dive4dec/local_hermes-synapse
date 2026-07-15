@@ -162,7 +162,7 @@ $html = <<<HTML
 <style>
   @page { size: A4; margin: 16mm 14mm; }
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:#1a1a1a; margin:0; }
+  body { font-family: "DejaVu Sans", sans-serif; color:#1a1a1a; margin:0; }
   .toolbar { position: sticky; top:0; background:#fff; border-bottom:1px solid #ddd; padding:8px 14px; z-index:99; }
   .toolbar button { font-size:14px; padding:8px 16px; background:#0a58ca; color:#fff; border:0; border-radius:4px; cursor:pointer; }
   .cover { text-align:center; padding:40px 0 20px; }
@@ -177,7 +177,7 @@ $html = <<<HTML
   .qstem > p:first-child, .qcontent p:first-child { margin-top:0; }
   .qstem > p:last-child, .qcontent p:last-child { margin-bottom:0; }
   .qstem p, .qcontent p { margin:0 0 6px; line-height:1.5; }
-  .qstem code, .qcontent code { background:#eef1f4; padding:1px 4px; border-radius:3px; font-family:"Courier New",monospace; font-size:0.92em; white-space:pre-wrap; word-break:break-word; }
+  .qstem code, .qcontent code { background:#eef1f4; padding:1px 4px; border-radius:3px; font-family:"DejaVu Sans Mono", monospace; font-size:0.92em; white-space:pre-wrap; word-break:break-word; }
   .qstem ul, .qstem ol, .qcontent ul, .qcontent ol { margin:4px 0 6px; padding-left:22px; }
   .qstem li, .qcontent li { margin:2px 0; }
   .qcontent { font-size:13px; }
@@ -192,7 +192,7 @@ $html = <<<HTML
   .tile { display:inline-block; border:1px solid #7896c8; background:#f0f5ff; color:#16335c; border-radius:4px; padding:4px 10px; margin:3px 4px 3px 0; font-size:12.5px; white-space:nowrap; }
   .tile p { display:inline; margin:0; }
   .blank { display:inline-block; min-width:60px; border-bottom:1px solid #333; margin:0 2px; }
-  pre.code { background:#f6f6f6; border:1px solid #e0e0e0; border-radius:4px; padding:10px; font-family:"Courier New",monospace; font-size:12px; white-space:pre-wrap; word-break:break-word; line-height:1.4; margin:6px 0 10px; page-break-inside:avoid; }
+  pre.code { background:#f6f6f6; border:1px solid #e0e0e0; border-radius:4px; padding:10px; font-family:"DejaVu Sans Mono", monospace; font-size:12px; white-space:pre-wrap; word-break:break-word; line-height:1.4; margin:6px 0 10px; page-break-inside:avoid; }
   .cr-label { font-weight:700; font-size:12px; color:#444; margin:10px 0 3px; }
   .workbox { margin-top:12px; border:1px dashed #bbb; border-radius:4px; height:54px; padding:6px 10px; color:#888; font-size:12px; page-break-inside:avoid; }
   @media print {
