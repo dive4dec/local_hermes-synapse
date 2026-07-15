@@ -1,0 +1,10 @@
+name: moodle-bridge
+version: 1.0.0
+description: "Bridges Hermes sessions to Moodle: identifies the current Moodle user per-session (per-user, not shared memory), registers tools for uploading files to courses and querying user-enrolled courses. Reads Moodle's config.php for DB credentials and the bridge session for user identity."
+author: dive4dec
+requires_env:
+  - MOODLE_CONFIG_PATH
+pip_dependencies:
+  - PyMySQL
+hooks:
+  - on_session_start
