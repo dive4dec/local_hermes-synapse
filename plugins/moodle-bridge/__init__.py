@@ -2,9 +2,12 @@
 moodle-bridge — Hermes plugin for Moodle integration.
 
 Does what memory cannot:
-  1. on_session_start hook: identifies the current Moodle user (per-session, not shared)
-  2. moodle_get_my_courses tool: returns courses the CURRENT user is enrolled in
-  3. moodle_upload_file tool: uploads a file to a Moodle course as a resource
+  1. moodle_get_my_courses tool: returns courses the CURRENT user is enrolled in
+  2. moodle_upload_file tool: uploads a file to a Moodle course as a resource
+
+User identity is read from $HERMES_HOME/.moodle_identity, written by the bridge
+before each prompt. The shared Hermes subprocess is single-threaded (prompts are
+serialized), so this is safe — the identity file always reflects the current user.
 
 Memory stores static knowledge (course IDs, quiz IDs). This plugin provides
 per-user identity and Moodle API actions — things that change every session
@@ -19,12 +22,11 @@ import re
 import subprocess
 import json
 import tempfile
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Per-session state (each session gets a fresh plugin instance context)
-_CURRENT_USER: Dict[str, Any] = {}
 _MOODLE_CFG: Optional[dict] = None
 
 
@@ -121,56 +123,38 @@ def _query_user_by_username(username: str) -> Optional[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Session start hook — identify the current Moodle user
+# Current user — read from identity file written by the bridge
 # ---------------------------------------------------------------------------
 
-def _on_session_start(session_id: str = "", **kwargs) -> Optional[str]:
-    """on_session_start hook — identify the current Moodle user.
+def _get_current_user() -> Optional[dict]:
+    """Read the current Moodle user from $HERMES_HOME/.moodle_identity.
 
-    Called by Hermes at session start. We try to identify the user from:
-    1. MOODLE_USERNAME env var (set by the bridge)
-    2. kwargs from the session context
-
-    Returns a context string injected into the system prompt, or None.
+    The bridge writes this file before each prompt. Because the Hermes ACP
+    subprocess is single-threaded (prompts are serialized), the file always
+    reflects the user whose prompt is currently being processed.
     """
-    global _CURRENT_USER
-    _CURRENT_USER = {}  # reset per session
-
-    username = os.environ.get("MOODLE_USERNAME", "")
-    if not username:
-        # Could also check kwargs for session metadata from the bridge
-        username = kwargs.get("username", "")
-
-    if not username:
-        logger.debug("No Moodle username available, moodle-bridge user context skipped")
+    hermes_home = os.environ.get("HERMES_HOME", "")
+    if not hermes_home:
         return None
-
+    identity_file = Path(hermes_home) / ".moodle_identity"
+    if not identity_file.exists():
+        return None
     try:
-        user = _query_user_by_username(username)
-        if not user:
-            logger.warning("Moodle user '%s' not found", username)
+        data = json.loads(identity_file.read_text())
+        username = data.get("username", "")
+        userid = data.get("userid", 0)
+        if not username:
             return None
-        _CURRENT_USER = user
-
-        courses = _query_user_courses(user["id"])
-        is_teacher = any(c.get("role") in ("editingteacher", "teacher", "manager") for c in courses)
-
-        lines = [
-            "## Moodle Session Context",
-            f"You are chatting with: {user['firstname']} {user['lastname']} "
-            f"(username: {user['username']}, userid: {user['id']})",
-            f"Role: {'teacher' if is_teacher else 'student'}",
-            "Enrolled courses:",
-        ]
-        for c in courses:
-            lines.append(f"  - {c['shortname']} (id={c['id']}): {c['fullname']} [{c.get('role', '?')}]")
-
-        if is_teacher:
-            lines.append("The user has teacher privileges — can upload files, view reports, manage courses.")
-
-        return "\n".join(lines)
+        # Look up full user info from DB
+        user = _query_user_by_username(username)
+        if user:
+            return user
+        # Fallback: construct minimal user from identity file
+        if userid:
+            return {"id": userid, "username": username, "firstname": "", "lastname": ""}
+        return None
     except Exception as e:
-        logger.warning("Moodle session context failed: %s", e)
+        logger.warning("Failed to read moodle identity: %s", e)
         return None
 
 
@@ -223,13 +207,14 @@ UPLOAD_FILE_SCHEMA = {
 
 def _handle_get_my_courses(args: dict, **kwargs) -> str:
     """Handler for moodle_get_my_courses tool."""
-    if not _CURRENT_USER:
+    user = _get_current_user()
+    if not user:
         return json.dumps({"error": "No Moodle user identified for this session"})
     try:
-        courses = _query_user_courses(_CURRENT_USER["id"])
+        courses = _query_user_courses(user["id"])
         return json.dumps({
-            "user": f"{_CURRENT_USER['firstname']} {_CURRENT_USER['lastname']}",
-            "userid": _CURRENT_USER["id"],
+            "user": f"{user['firstname']} {user['lastname']}".strip() or user["username"],
+            "userid": user["id"],
             "courses": [
                 {
                     "id": c["id"],
@@ -254,7 +239,8 @@ def _handle_upload_file(args: dict, **kwargs) -> str:
         return json.dumps({"error": "course_id and file_path are required"})
     if not os.path.exists(file_path):
         return json.dumps({"error": f"File not found: {file_path}"})
-    if not _CURRENT_USER:
+    user = _get_current_user()
+    if not user:
         return json.dumps({"error": "No Moodle user identified for this session"})
 
     # Write a small PHP helper that uses Moodle's file API
@@ -269,7 +255,7 @@ require_once($CFG->libdir . '/filelib.php');
 $courseid = {course_id};
 $filepath = '{file_path}';
 $displayname = '{display_name}';
-$userid = {_CURRENT_USER['id']};
+$userid = {user['id']};
 
 $context = context_course::instance($courseid);
 $fs = get_file_storage();
@@ -333,16 +319,15 @@ echo json_encode(array('cmid' => $cm->id, 'name' => $displayname, 'course' => $c
 # ---------------------------------------------------------------------------
 
 def register(ctx) -> None:
-    """Register moodle-bridge hooks and tools."""
+    """Register moodle-bridge tools."""
     cfg = _get_moodle_cfg()
     if not cfg:
         logger.info("moodle-bridge: MOODLE_CONFIG_PATH not set — plugin inactive")
         return
 
-    # Hook: identify user at session start (per-session, not shared memory)
-    ctx.register_hook("on_session_start", _on_session_start)
-
     # Tools: actions memory cannot provide
+    # User identity is read from $HERMES_HOME/.moodle_identity (written by the
+    # bridge before each prompt) — no on_session_start hook needed.
     ctx.register_tool(
         name="moodle_get_my_courses",
         schema=GET_MY_COURSES_SCHEMA,
@@ -354,4 +339,4 @@ def register(ctx) -> None:
         handler=_handle_upload_file,
     )
 
-    logger.info("moodle-bridge registered: session hook + 2 tools")
+    logger.info("moodle-bridge registered: 2 tools")
