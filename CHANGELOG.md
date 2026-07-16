@@ -5,6 +5,30 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [0.1.1] — 2026-07-16
+
+### Fixed
+
+#### DejaVu Sans fonts for Unicode math in dompdf
+- **Greek/math Unicode characters (π, ≤, ⋯) rendered as `?` in PDFs** —
+  the CSS `font-family` specified fonts that dompdf doesn't bundle
+  (`-apple-system`, `"Segoe UI"`, `"Courier New"`), causing a silent
+  fallback to Helvetica, which lacks Greek and math glyphs.
+- Changed `font-family` to `"DejaVu Sans"` (body) and `"DejaVu Sans Mono"`
+  (code blocks) — these TTFs are bundled with dompdf and embedded
+  automatically. Verified: 4 DejaVu subfonts embedded, zero Helvetica.
+
+#### MathJax SVG rendering attempted and reverted
+- **MathJax SVG via Node.js `mathjax-full`** was tested as a replacement
+  for Unicode approximation — server-side SVG rendering with `liteAdaptor`
+  worked, but **dompdf cannot render MathJax SVG output** (`<defs>`,
+  `<use>`, `xlink:href`, `transform="scale(1,-1)"` are unsupported).
+  Equations did not appear in the PDF. Reverted to Unicode + DejaVu Sans
+  approach (commit `9c7e145`).
+- Documented as a pitfall in `SKILL.md`: dompdf cannot render MathJax SVG.
+
+---
+
 ## [0.1.0] — 2026-07-15
 
 ### Added
