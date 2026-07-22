@@ -659,11 +659,11 @@ class MoodleQuizDownloader:
 
         nz = [a for a in attempts if a["grade"] > 0]
 
-        if nz:
+        if high > 0 and nz:
             high_n = max(0, min(high, len(nz)))
             take(nz[:high_n], "High")
 
-        if nz:
+        if low > 0 and nz:
             low_n = max(0, min(low, len(nz)))
             take(nz[-low_n:][::-1], "Low")
 
