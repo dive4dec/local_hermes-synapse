@@ -5,6 +5,29 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [0.2.1] — 2026-07-29
+
+### Fixed
+
+#### moodle_quiz_audit skill
+- **"Skill 'moodle' not found" error**: The `skills/moodle/` directory had no
+  `SKILL.md` at top level (only nested sub-skills like `moodle-admin/` inside).
+  The ACP saw `moodle` as a directory, tried to load it as a skill, and failed.
+  Fix: flattened the nested structure — all sub-skills are now top-level
+  directories (`moodle-admin/`, `moodle-course-queries/`, etc.).
+- **Unnecessary approval prompt**: SKILL.md told the agent to check `.env` for
+  `MOODLE_AUDIT_CAMPUS_IPS`, but the "If NOT set → write to `.env`" instruction
+  came before "If already set → proceed". The agent sometimes tried to write to
+  `.env` even when the var was already set, triggering the Hermes terminal
+  safety guard. Fix: reordered — "If already set → proceed, do NOT write to
+  `.env`" comes first.
+- **Simplified session handling**: removed `--moodle-userid` parameter entirely.
+  The bridge is single-threaded, so the PHP plugin writes a single `msession.json`
+  file (fixed path) that always belongs to the current user. No userid lookup
+  needed.
+
+---
+
 ## [0.2.0] — 2026-07-29
 
 ### Added
