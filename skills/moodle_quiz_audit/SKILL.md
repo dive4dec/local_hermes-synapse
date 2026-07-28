@@ -35,12 +35,6 @@ This tool audits a Moodle quiz for suspicious student behavior by fetching the q
 ## When to use this skill
 Trigger this skill whenever the user asks you to "audit", "check", "inspect", or "analyze" a Moodle quiz, course module, or exam data for cheating or suspicious behavior.
 
-## How to obtain the Moodle user ID
-
-The Moodle user ID is available in the system prompt context as `moodle_userid`. The bridge passes it from the PHP plugin. **Do NOT query the database to look up the user** — use the `moodle_userid` value directly. This ensures the session file (`msession_<userid>.json`) matches the user who is actually logged in and chatting.
-
-If `moodle_userid` is not visible in the context, ask the user: "What is your Moodle user ID? You can find it in your Moodle profile page URL."
-
 ## Prerequisites
 
 ### Python dependencies
@@ -85,16 +79,14 @@ MOODLE_AUDIT_INSECURE=1
 
 The absolute path to the core script is: `$HERMES_HOME/skills/moodle_quiz_audit/moodle_quiz_audit.py`
 
-**Step 1:** Determine the `moodle_userid` from the chat context (see "How to obtain the Moodle user ID" above).
-
-**Step 2:** Construct and run the bash command:
+**Step 1:** Construct and run the bash command:
 ```bash
-$HERMES_HOME/venv/bin/python3 $HERMES_HOME/skills/moodle_quiz_audit/moodle_quiz_audit.py --cmid {{cmid}} --moodle-userid {{moodle_userid}}
+$HERMES_HOME/venv/bin/python3 $HERMES_HOME/skills/moodle_quiz_audit/moodle_quiz_audit.py --cmid {{cmid}}
 ```
 - If `fast_mins` is provided, append: `--fast-mins {{fast_mins}}`
 - If `fast_score` is provided, append: `--fast-score {{fast_score}}`
 
-**Step 3:** Read the standard output and synthesize a summary (see below).
+The script automatically reads the session cookie from `$HERMES_HOME/run/msession.json`, which the PHP plugin writes on each chat message. No user ID is needed.
 
 ## Post-Execution Summary
 After the terminal command finishes executing, read the standard output (`stdout`) returned by the script.

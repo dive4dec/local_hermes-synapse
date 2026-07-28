@@ -13,8 +13,8 @@ BeautifulSoup, and flags suspicious student behavior:
 No database access, no CDP, no Chrome binary required. Pure HTTP.
 
 Usage:
-    python3 moodle_quiz_audit.py --cmid 123 --moodle-userid 2
-    python3 moodle_quiz_audit.py --cmid 123 --moodle-userid 2 --fast-mins 10 --fast-score 90
+    python3 moodle_quiz_audit.py --cmid 123
+    python3 moodle_quiz_audit.py --cmid 123 --fast-mins 10 --fast-score 90
 """
 
 import argparse
@@ -81,23 +81,18 @@ def load_session_file(path: str) -> dict:
     return data
 
 
-def resolve_session(moodle_userid: Optional[str] = None,
-                    session_file: Optional[str] = None) -> dict:
-    """Resolve a session dict from either an explicit path or a userid.
+def resolve_session(session_file: Optional[str] = None) -> dict:
+    """Resolve a session dict from the msession.json file.
 
-    Requires explicit userid or session_file — no auto-detect (security:
-    auto-detect could load another user's session).
+    The PHP plugin writes $HERMES_HOME/run/msession.json on each chat API
+    call. The bridge is single-threaded, so this file always belongs to
+    the user whose request is currently being processed.
     """
     if session_file:
         return load_session_file(session_file)
-    if moodle_userid:
-        hermes_home = os.environ.get("HERMES_HOME", "/var/www/moodledata/.hermes")
-        path = os.path.join(hermes_home, "run", f"msession_{moodle_userid}.json")
-        return load_session_file(path)
-    raise RuntimeError(
-        "No session specified. Pass --moodle-userid <id> (required). "
-        "The agent should obtain the userid from the chat context."
-    )
+    hermes_home = os.environ.get("HERMES_HOME", "/var/www/moodledata/.hermes")
+    path = os.path.join(hermes_home, "run", "msession.json")
+    return load_session_file(path)
 
 
 # ── Campus IP classification (configurable via env var) ────────────
@@ -482,7 +477,7 @@ def parse_grade_value(grade_str: str, max_grade: float) -> Tuple[Optional[float]
 
 # ── Core Audit Logic ───────────────────────────────────────────────
 def run_audit(cmid: int, fast_mins: float = None, fast_score: float = 80.0,
-              moodle_userid: str = None, session_file: str = None):
+              session_file: str = None):
     """Main audit logic: fetch data, analyze, and print results."""
 
     print("=" * 80)
@@ -495,7 +490,7 @@ def run_audit(cmid: int, fast_mins: float = None, fast_score: float = 80.0,
     # ── Step 0: Load session and authenticate ──
     print("\n--- Step 0: Loading session ---")
     try:
-        session = resolve_session(moodle_userid=moodle_userid, session_file=session_file)
+        session = resolve_session(session_file=session_file)
     except RuntimeError as e:
         print(f"\n[ERROR] {e}")
         return
@@ -652,12 +647,8 @@ def parse_args():
                         help="Suspicious completion time threshold in minutes")
     parser.add_argument("--fast-score", type=float, default=80.0,
                         help="Suspicious score percentage threshold (default: 80.0)")
-    parser.add_argument("--moodle-userid", type=str, default=None, required=True,
-                        help="Moodle user ID to load session file for "
-                        "($HERMES_HOME/run/msession_<id>.json). Required — "
-                        "auto-detect removed for security.")
     parser.add_argument("--session-file", type=str, default=None,
-                        help="Explicit path to a session JSON file (overrides --moodle-userid)")
+                        help="Explicit path to a session JSON file (default: $HERMES_HOME/run/msession.json)")
     return parser.parse_args()
 
 
@@ -667,7 +658,6 @@ def main():
         cmid=args.cmid,
         fast_mins=args.fast_mins,
         fast_score=args.fast_score,
-        moodle_userid=args.moodle_userid,
         session_file=args.session_file,
     )
 
