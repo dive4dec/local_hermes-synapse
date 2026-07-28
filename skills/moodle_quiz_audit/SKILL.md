@@ -13,12 +13,8 @@ parameters:
     fast_score:
       type: number
       description: Suspicious score percentage threshold, default 80.0 (optional).
-    moodle_userid:
-      type: string
-      description: Moodle user ID of the requesting user (required). The agent must obtain this from the chat context — do NOT let the user type an arbitrary userid.
   required:
     - cmid
-    - moodle_userid
 ---
 
 # Skill: Moodle Quiz Audit (HTTP Session-Injection Mode)
@@ -32,12 +28,18 @@ This tool audits a Moodle quiz for suspicious student behavior by fetching the q
 ## Architecture
 - **No database access** — data is fetched from Moodle's built-in report pages (HTML).
 - **No Chrome/CDP** — pure HTTP via `requests` + `BeautifulSoup`.
-- **Session injection** — the `local_hermesagent` PHP plugin writes the user's session cookie to `$HERMES_HOME/run/msession_<userid>.json` on every API call. The Python script reads this file and injects the cookie into a `requests.Session()`.
+- **Session injection** — the `local_hermesagent` PHP plugin writes the current user's session cookie to `$HERMES_HOME/run/msession_<userid>.json` on every chat API call. The Python script reads this file and injects the cookie into a `requests.Session()`.
 - **30-minute TTL** — stale session files are rejected for security.
 - **Per-request login guard** — if the session expires mid-audit, the tool detects the redirect to the login page and reports an error instead of silently parsing a login form.
 
 ## When to use this skill
 Trigger this skill whenever the user asks you to "audit", "check", "inspect", or "analyze" a Moodle quiz, course module, or exam data for cheating or suspicious behavior.
+
+## How to obtain the Moodle user ID
+
+The Moodle user ID is available in the system prompt context as `moodle_userid`. The bridge passes it from the PHP plugin. **Do NOT query the database to look up the user** — use the `moodle_userid` value directly. This ensures the session file (`msession_<userid>.json`) matches the user who is actually logged in and chatting.
+
+If `moodle_userid` is not visible in the context, ask the user: "What is your Moodle user ID? You can find it in your Moodle profile page URL."
 
 ## Prerequisites
 
@@ -48,25 +50,30 @@ sh $HERMES_HOME/skills/moodle_quiz_audit/install_deps.sh
 ```
 
 ### Campus IP ranges (MOODLE_AUDIT_CAMPUS_IPS)
-The skill classifies IP addresses as campus vs. external using the `MOODLE_AUDIT_CAMPUS_IPS` environment variable. This should be set in the Hermes `.env` file (editable from the plugin Settings page → `.env` editor).
 
-Format: comma-separated CIDR notation, e.g.:
+**Before running the audit**, check if the `MOODLE_AUDIT_CAMPUS_IPS` environment variable is set:
+```bash
+grep MOODLE_AUDIT_CAMPUS_IPS $HERMES_HOME/.env 2>/dev/null || echo "NOT SET"
+```
+
+**If NOT set**, you MUST ask the user before proceeding:
+> "I need your campus IP ranges to classify student connections as campus vs. external.
+> What CIDR ranges should be considered 'campus'? (e.g., `10.0.0.0/8` for internal hosts,
+> `144.214.0.0/16` for VPN, etc.) I'll save them to the Hermes `.env` file so you only
+> need to do this once."
+
+Then save the user's answer to `.env`:
+```bash
+echo "MOODLE_AUDIT_CAMPUS_IPS=<user-provided-cidrs>" >> $HERMES_HOME/.env
+```
+Note: the standalone script reads `.env` directly, so no bridge restart is needed for the script itself. However, the bridge process will pick up the env var on its next restart too.
+
+**If already set**, proceed with the audit — the script will use the configured ranges.
+
+Format: comma-separated CIDR notation:
 ```
 MOODLE_AUDIT_CAMPUS_IPS=10.0.0.0/8,144.214.0.0/16,172.16.0.0/12
 ```
-
-**If `MOODLE_AUDIT_CAMPUS_IPS` is not set**, the skill falls back to standard private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16). This may not match your campus — external IPs will be over-reported.
-
-**If the env var is not set and the user asks about IP auditing**, ask the user:
-> "I need your campus IP ranges to classify student connections. What CIDR ranges
-> should be considered 'campus'? (e.g., 10.0.0.0/8 for internal hosts, 144.214.0.0/16
-> for VPN, etc.) I'll save them to the Hermes .env file."
-
-Then add the user's answer to `~/.hermes/.env`:
-```bash
-echo 'MOODLE_AUDIT_CAMPUS_IPS=<user-provided-cidrs>' >> ~/.hermes/.env
-```
-The bridge loads `.env` on next restart, so ask the user to restart the bridge from the Settings page (or do it via `hermes-bridge-control.sh restart`).
 
 ### TLS verification
 TLS verification is **on by default**. If your Moodle uses a self-signed certificate and the skill fails with an SSL error, set in `.env`:
@@ -75,16 +82,19 @@ MOODLE_AUDIT_INSECURE=1
 ```
 
 ## Execution Instructions
+
 The absolute path to the core script is: `$HERMES_HOME/skills/moodle_quiz_audit/moodle_quiz_audit.py`
 
-**Step 1:** Construct the bash command based on the parameters extracted. The `--moodle-userid` is **required** — obtain it from the chat context (the user's Moodle ID). Never let the user supply an arbitrary userid.
-```
+**Step 1:** Determine the `moodle_userid` from the chat context (see "How to obtain the Moodle user ID" above).
+
+**Step 2:** Construct and run the bash command:
+```bash
 $HERMES_HOME/venv/bin/python3 $HERMES_HOME/skills/moodle_quiz_audit/moodle_quiz_audit.py --cmid {{cmid}} --moodle-userid {{moodle_userid}}
 ```
 - If `fast_mins` is provided, append: `--fast-mins {{fast_mins}}`
 - If `fast_score` is provided, append: `--fast-score {{fast_score}}`
 
-**Step 2:** Run the constructed command in your bash terminal.
+**Step 3:** Read the standard output and synthesize a summary (see below).
 
 ## Post-Execution Summary
 After the terminal command finishes executing, read the standard output (`stdout`) returned by the script.
@@ -93,9 +103,9 @@ Synthesize the terminal output into a clear, professional, and concise summary f
 If the output includes `[WARN] No IP data collected — IP audit incomplete`, warn the user that the "no off-campus IPs" result is **not reliable** and the log report may need to be checked manually.
 
 ## Troubleshooting
-- **"Session file not found"**: The user needs to send a message in the Moodle chat first so the PHP plugin writes the session file.
+- **"Session file not found"**: The session file `msession_<userid>.json` doesn't exist for the given user ID. This means the user hasn't sent a message through the Moodle chat yet (the PHP plugin writes the file on each chat API call). Ask the user to send any message in the chat first, then retry.
 - **"Session file is stale"**: The session file is older than 30 minutes. Ask the user to send a fresh message in the Moodle chat and retry.
 - **"Session expired (redirected to login)"**: The Moodle session cookie has expired. Ask the user to log in again and retry.
 - **"Session expired mid-audit"**: The cookie expired while the audit was running. Re-open the Moodle chat to refresh the session, then retry.
 - **"No attempts found"**: The quiz may have no submissions yet, or the cmid may be incorrect.
-- **SSL error / certificate verification failed**: Set `MOODLE_AUDIT_INSECURE=1` in `~/.hermes/.env` and restart the bridge.
+- **"SSL error / certificate verification failed"**: Set `MOODLE_AUDIT_INSECURE=1` in `~/.hermes/.env`.
