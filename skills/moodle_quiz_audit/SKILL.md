@@ -45,24 +45,24 @@ sh $HERMES_HOME/skills/moodle_quiz_audit/install_deps.sh
 
 ### Campus IP ranges (MOODLE_AUDIT_CAMPUS_IPS)
 
-**Before running the audit**, check if the `MOODLE_AUDIT_CAMPUS_IPS` environment variable is set:
+**Before running the audit**, check if the `MOODLE_AUDIT_CAMPUS_IPS` environment variable is already set:
 ```bash
 grep MOODLE_AUDIT_CAMPUS_IPS $HERMES_HOME/.env 2>/dev/null || echo "NOT SET"
 ```
 
-**If NOT set**, you MUST ask the user before proceeding:
+**If already set** (grep returns a line), proceed with the audit — the script will use the configured ranges. Do NOT write to `.env`.
+
+**If NOT set** (grep returns "NOT SET"), you MUST ask the user before proceeding:
 > "I need your campus IP ranges to classify student connections as campus vs. external.
 > What CIDR ranges should be considered 'campus'? (e.g., `10.0.0.0/8` for internal hosts,
 > `144.214.0.0/16` for VPN, etc.) I'll save them to the Hermes `.env` file so you only
 > need to do this once."
 
-Then save the user's answer to `.env`:
+After the user provides the ranges, save them to `.env`:
 ```bash
 echo "MOODLE_AUDIT_CAMPUS_IPS=<user-provided-cidrs>" >> $HERMES_HOME/.env
 ```
-Note: the standalone script reads `.env` directly, so no bridge restart is needed for the script itself. However, the bridge process will pick up the env var on its next restart too.
-
-**If already set**, proceed with the audit — the script will use the configured ranges.
+Note: the standalone script reads `.env` directly, so no bridge restart is needed.
 
 Format: comma-separated CIDR notation:
 ```
