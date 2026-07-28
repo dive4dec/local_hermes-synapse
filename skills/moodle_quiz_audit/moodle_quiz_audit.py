@@ -29,6 +29,30 @@ from typing import Dict, List, Optional, Tuple
 import requests
 from bs4 import BeautifulSoup
 
+
+def _load_dotenv():
+    """Load ~/.hermes/.env into os.environ if not already set.
+    This allows the script to pick up env vars (MOODLE_AUDIT_CAMPUS_IPS, etc.)
+    when run standalone (not via the bridge)."""
+    hermes_home = os.environ.get("HERMES_HOME", "/var/www/moodledata/.hermes")
+    env_path = os.path.join(hermes_home, ".env")
+    if not os.path.exists(env_path):
+        return
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            # Don't override existing env vars
+            if key not in os.environ:
+                os.environ[key] = value
+
+
+_load_dotenv()
+
 # ── Fixed Constants ────────────────────────────────────────────────
 SESSION_TTL = 1800  # 30 minutes — reject stale session files
 LOG_CONTEXTLEVEL = 70  # 70 = Course Module Level
@@ -249,34 +273,46 @@ class MoodleHTTPClient:
 def extract_quiz_info(client: MoodleHTTPClient, cmid: int) -> dict:
     """Fetch quiz overview report and extract student data.
     Returns dict with quiz_id, quiz_name, max_grade, and attempts list."""
-    url = (f"{client.moodle_url}/mod/quiz/report/index.php"
-           f"?cmid={cmid}&report=overview&pagesize=10000")
+    # Moodle 5.x: /mod/quiz/report.php?id={cmid}&mode=overview
+    url = (f"{client.moodle_url}/mod/quiz/report.php"
+           f"?id={cmid}&mode=overview&pagesize=10000")
     html = client.fetch(url)
     soup = BeautifulSoup(html, "html.parser")
 
-    # Extract quiz name from page heading
+    # Extract quiz name from page <title> (more reliable than <h2> which
+    # may pick up the Moodle message drawer heading)
     quiz_name = "Unknown Quiz"
-    h2 = soup.find("h2")
-    if h2:
-        quiz_name = h2.get_text(strip=True)
+    title_tag = soup.find("title")
+    if title_tag:
+        # Title format: "CE-Quiz 8 | edb" → take first part
+        quiz_name = title_tag.get_text(strip=True).split("|")[0].strip()
 
     # Parse the overview table — Moodle uses 'generaltable' class for report tables
     rows = client.parse_table(html, table_class="generaltable")
 
+    # Moodle 5.x overview table column headers:
+    #   Select all, '', First name/Last name, Email address, Status,
+    #   Started, Completed, Duration, Grade/20.00, Q. 1/5.00, ...
+    # Column names vary by Moodle version/language; use flexible matching.
+    def col(row, *keys):
+        """Get first matching column value by case-insensitive substring."""
+        for k, v in row.items():
+            kl = k.lower()
+            for key in keys:
+                if key.lower() in kl:
+                    return v.strip() if v else ""
+        return ""
+
     attempts = []
     for row in rows:
-        # Moodle overview table columns: Full name, Grade, Time started,
-        # Time finished, Duration, Attempts, etc.
-        # Column names may vary by Moodle language; use flexible matching.
-        name = row.get("Full name", row.get("fullname", row.get("Name", "")))
-        grade = row.get("Grade", row.get("grade", ""))
-        time_started = row.get("Time started", row.get("timestart", ""))
-        time_finished = row.get("Time finished", row.get("timefinish", ""))
-        duration = row.get("Duration", row.get("duration", ""))
+        name = col(row, "First name", "fullname", "Name")
+        grade = col(row, "Grade/")
+        time_started = col(row, "Started", "timestart")
+        time_finished = col(row, "Completed", "timefinish")
+        duration = col(row, "Duration")
 
         # Skip summary rows (Average, etc.)
-        if not name or name in ("Average", "Overall average", "Group average",
-                                "Overall Average", "Group Average"):
+        if not name or name.lower() in ("average", "overall average", "group average"):
             continue
         # Skip rows with no grade
         if not grade or grade == "-":
@@ -293,16 +329,40 @@ def extract_quiz_info(client: MoodleHTTPClient, cmid: int) -> dict:
     # Extract max grade from quiz info
     max_grade = _extract_max_grade(soup)
 
+    # Extract course ID from the overview page (needed for log report)
+    course_id = None
+    # Look for course id in the page URL or breadcrumb
+    for link in soup.find_all("a", href=True):
+        href = link["href"]
+        m = re.search(r"[?&]course=(\d+)", href)
+        if m:
+            course_id = int(m.group(1))
+            break
+
     return {
         "quiz_name": quiz_name,
         "max_grade": max_grade,
         "attempts": attempts,
+        "course_id": course_id,
     }
 
 
 def _extract_max_grade(soup: BeautifulSoup) -> float:
-    """Try to find the max grade from the page."""
-    # Look for "Maximum grade" or similar in the page
+    """Try to find the max grade from the page.
+    
+    In Moodle 5.x, the overview table has a header like 'Grade/20.00' where
+    the number after the slash is the max grade.
+    """
+    # Method 1: Look for 'Grade/X.Y' in table headers
+    for th in soup.find_all("th"):
+        text = th.get_text(strip=True)
+        m = re.match(r"Grade/([\d.]+)", text, re.I)
+        if m:
+            try:
+                return float(m.group(1))
+            except ValueError:
+                pass
+    # Method 2: Look for "Maximum grade" label
     for label in soup.find_all(string=re.compile(r"Maximum grade|max.grade|sumgrades", re.I)):
         parent = label.parent
         if parent and parent.next_sibling:
@@ -322,12 +382,23 @@ def _extract_max_grade(soup: BeautifulSoup) -> float:
     return 100.0  # default
 
 
-def extract_ip_data(client: MoodleHTTPClient, cmid: int) -> Dict[str, List[str]]:
+def extract_ip_data(client: MoodleHTTPClient, cmid: int, course_id: int = None) -> Dict[str, List[str]]:
     """Fetch the access log report for the given cmid and extract IP addresses
-    per student. Returns {student_name: [ip1, ip2, ...]}."""
-    # The log report filters by modid (course module id)
-    url = (f"{client.moodle_url}/report/log/index.php"
-           f"?modid={cmid}&perpage=10000")
+    per student. Returns {student_name: [ip1, ip2, ...]}.
+
+    If course_id is provided, uses the course-level log report filtered by modid.
+    Otherwise, tries the site-level log report with just modid."""
+    # Moodle 5.x: /report/log/index.php?course={id}&modid={cmid}
+    # CRITICAL: date must be empty (all days), NOT '0' (which means today).
+    # chooselog=1 triggers the actual log display; without it only the filter
+    # form is shown.
+    params = "chooselog=1&showusers=1&showcourses=0&user=0&date=&modaction=&origin=&edulevel=-1&logreader=logstore_standard"
+    if course_id:
+        url = (f"{client.moodle_url}/report/log/index.php"
+               f"?course={course_id}&modid={cmid}&{params}")
+    else:
+        url = (f"{client.moodle_url}/report/log/index.php"
+               f"?modid={cmid}&{params}")
     html = client.fetch(url)
 
     # Moodle log report uses 'generaltable' class
@@ -449,10 +520,13 @@ def run_audit(cmid: int, fast_mins: float = None, fast_score: float = 80.0,
     quiz_name = quiz_info["quiz_name"]
     max_grade = quiz_info["max_grade"]
     attempts = quiz_info["attempts"]
+    course_id = quiz_info.get("course_id")
 
     print(f"  Quiz Name:  {quiz_name}")
     print(f"  Max Grade:  {max_grade}")
     print(f"  Total attempts parsed: {len(attempts)}")
+    if course_id:
+        print(f"  Course ID:  {course_id}")
 
     if not attempts:
         print("  [WARN] No attempts found. The quiz may have no submissions yet.")
@@ -470,7 +544,7 @@ def run_audit(cmid: int, fast_mins: float = None, fast_score: float = 80.0,
         print("  in the Hermes .env file (Settings → .env editor).")
 
     try:
-        user_ips = extract_ip_data(client, cmid)
+        user_ips = extract_ip_data(client, cmid, course_id=course_id)
         print(f"  IP data collected for {len(user_ips)} students")
     except Exception as e:
         print(f"  [WARN] Could not fetch IP data: {e}")
