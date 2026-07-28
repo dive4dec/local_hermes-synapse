@@ -5,6 +5,57 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [0.2.0] — 2026-07-29
+
+### Added
+
+#### moodle_quiz_audit skill
+- **Audits Moodle quizzes for suspicious student behavior** — fast completion
+  + high scores, non-campus IP addresses — by fetching Moodle's built-in
+  quiz overview report and access log report pages via HTTP session
+  injection. No database access, no Chrome/CDP.
+- **Session injection**: reads `$HERMES_HOME/run/msession.json` (written by
+  the `local_hermesagent` PHP plugin on each chat API call) and injects the
+  user's Moodle session cookie into a `requests.Session()`. The bridge is
+  single-threaded, so a single file is safe and always belongs to the
+  current user. No `--moodle-userid` parameter needed.
+- **Campus IP classification**: uses `MOODLE_AUDIT_CAMPUS_IPS` environment
+  variable (comma-separated CIDR). If not set, the skill asks the user for
+  their campus ranges and saves them to `.env`. Falls back to standard
+  private ranges (10/8, 172.16/12, 192.168/16) if unset.
+- **TLS verification on by default**; `MOODLE_AUDIT_INSECURE=1` disables it
+  for self-signed certificates.
+- **30-minute TTL** on session files; per-request login-redirect guard.
+- **`install_deps.sh`** installs `requests` + `beautifulsoup4` into the
+  Hermes venv (not system Python, which is PEP 668 locked).
+
+### Fixed
+
+#### moodle_quiz_audit — Moodle 5.x compatibility
+- **Quiz report URL**: `/mod/quiz/report.php?id={cmid}&mode=overview`
+  (was `/mod/quiz/report/index.php?cmid={}&report=overview` — 404 in 5.x).
+- **Log report URL**: `chooselog=1&date=` (empty = all days, not `0` which
+  means "today"). Without `chooselog=1` only the filter form renders.
+- **Quiz name extraction**: from `<title>` tag (was `<h2>` which grabbed the
+  Moodle message drawer heading "Messaging").
+- **Max grade**: parsed from `Grade/X.Y` table header (was searching for a
+  "Maximum grade" text label that doesn't exist in Moodle 5.x).
+- **Column name matching**: flexible substring matching (`First name`,
+  `Grade/`, `Started`, `Completed`) instead of exact strings.
+
+#### moodle_quiz_audit — security & portability
+- Removed committed `.pyc` files; added `.gitignore`.
+- Replaced hardcoded CityU IP ranges with `MOODLE_AUDIT_CAMPUS_IPS` env var.
+- Replaced `verify=False` with TLS verification on by default.
+- `$HERMES_HOME` resolved from environment first, falls back to default.
+- `_load_dotenv()`: standalone scripts read `~/.hermes/.env` at import time
+  (the bridge only injects `.env` into the ACP process, not terminal
+  subprocesses).
+- Dependencies pinned with `>=` floors (not `==`) to avoid conflicts with
+  hermes-agent's own dependency pins.
+
+---
+
 ## [0.1.1] — 2026-07-16
 
 ### Fixed
