@@ -44,4 +44,12 @@ The foreign key column referencing `mdl_quiz.id` is named **`quiz`**, NOT `quizi
 
 ## PHP CLI lacks PDO MySQL driver
 
-The PHP CLI environment in this Moodle pod does NOT have the `pdo_mysql` extension. PHP scripts that use `new PDO('mysql:host=...')` will fail with "could not find driver". **Workaround:** use the MySQL CLI (`mysql -h mariadb -u moodleuser -pyourpassword moodle`) via Python `subprocess` or shell commands for data extraction, then process in Python.
+The PHP CLI environment in this Moodle pod does NOT have the `pdo_mysql` extension. PHP scripts that use `new PDO('mysql:host=...')` will fail with "could not find driver". **Workaround:** use the MySQL CLI via Python `subprocess` or shell commands for data extraction, then process in Python. Build the connection string from Moodle's `config.php` at runtime:
+
+```bash
+cd /var/www/html && mysql $(php -r '
+define("CLI_SCRIPT", true);
+require_once("config.php");
+printf("-h %s -u %s -p%s %s", $CFG->dbhost, $CFG->dbuser, $CFG->dbpass, $CFG->dbname);
+')
+```

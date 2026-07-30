@@ -1,8 +1,24 @@
 # Moodle 5.x Quiz Schema (Direct DB Access)
 
-**Database**: MariaDB at host `mariadb`, db `moodle`, user `moodleuser`, pass `yourpassword`
+**Database**: credentials are stored in Moodle's `config.php` at `/var/www/html/config.php` — never hardcode them here.
 
-Connect: `mysql -h mariadb -u moodleuser -pyourpassword moodle`
+Extract connection info at runtime:
+```bash
+cd /var/www/html && php -r '
+define("CLI_SCRIPT", true);
+require_once("config.php");
+printf("host=%s db=%s user=%s\n", $CFG->dbhost, $CFG->dbname, $CFG->dbuser);
+'
+```
+
+For interactive access, pipe the credentials from config.php:
+```bash
+cd /var/www/html && mysql $(php -r '
+define("CLI_SCRIPT", true);
+require_once("config.php");
+printf("-h %s -u %s -p%s %s", $CFG->dbhost, $CFG->dbuser, $CFG->dbpass, $CFG->dbname);
+')
+```
 
 ## Key schema changes from older Moodle versions
 

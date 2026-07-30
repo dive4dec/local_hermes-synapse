@@ -297,7 +297,11 @@ class CDPSession:
 
     def navigate(self, url: str, wait: float = 2.0, ready_timeout: int = 30):
         """Navigate the tab and wait until document.readyState == 'complete'."""
-        self.send("Page.navigate", {"url": url})
+        result = self.send("Page.navigate", {"url": url})
+        
+        if result and "errorText" in result:
+            raise RuntimeError(f"Network error when navigating to {url}: {result['errorText']}")
+
         deadline = time.time() + ready_timeout
         while time.time() < deadline:
             try:
@@ -307,6 +311,11 @@ class CDPSession:
             except Exception:
                 pass
             time.sleep(0.3)
+            
+        current_url = self.evaluate("location.href") or ""
+        if current_url.startswith("chrome-error://"):
+            raise RuntimeError(f"Browser failed to load the page. URL '{url}' is unreachable.")
+
         if wait:
             time.sleep(wait)
 
@@ -613,11 +622,7 @@ class MoodleQuizDownloader:
         if mo:
             num, den = float(mo.group(1)), float(mo.group(2))
             return (num / den * 100.0) if den else 0.0
-        # 4) Generic fallback: first "X / Y" anywhere on the page.
-        m2 = re.search(r"([\d.]+)\s*/\s*([\d.]+)", body)
-        if m2:
-            num, den = float(m2.group(1)), float(m2.group(2))
-            return (num / den * 100.0) if den else 0.0
+
         return None
 
     def _read_attempt_grade(self, review_url: str):
@@ -641,6 +646,7 @@ class MoodleQuizDownloader:
     @staticmethod
     def sample(attempts: List[Dict], high: int, medium: int, low: int) -> List[Dict]:
         """Return a deduplicated, tagged list of selected attempts."""
+
         if not attempts:
             return []
 
@@ -735,9 +741,11 @@ class MoodleQuizDownloader:
 # --------------------------------------------------------------------------- #
 # CLI
 # --------------------------------------------------------------------------- #
-def _load_session_file(path: str, ttl: int) -> dict:
+def _load_session_file(path: str, ttl: int, expected_userid: Optional[int] = None) -> dict:
     """Load and validate a per-user msession JSON written by the Moodle plugin.
-    Enforces a TTL so a stale session secret can't be reused indefinitely."""
+    Enforces a TTL so a stale session secret can't be reused indefinitely.
+    If expected_userid is given, the file's userid must match — prevents a
+    caller from loading another user's session file."""
     if not os.path.exists(path):
         raise RuntimeError(
             f"Session file not found: {path}. The Moodle plugin writes it per "
@@ -748,6 +756,13 @@ def _load_session_file(path: str, ttl: int) -> dict:
     for k in ("cookie_name", "cookie_value", "domain"):
         if not data.get(k):
             raise RuntimeError(f"Session file {path} is missing '{k}'.")
+    # Validate userid if the file carries one and we have an expected value.
+    file_uid = data.get("userid")
+    if expected_userid is not None and file_uid is not None:
+        if int(file_uid) != int(expected_userid):
+            raise RuntimeError(
+                f"Session file {path} belongs to user {file_uid}, "
+                f"but expected user {expected_userid}. Session hijack blocked.")
     age = time.time() - int(data.get("written_at", 0))
     if ttl > 0 and age > ttl:
         raise RuntimeError(
@@ -758,13 +773,27 @@ def _load_session_file(path: str, ttl: int) -> dict:
 
 def _resolve_session(args) -> Optional[dict]:
     """Return a parsed session dict for server-side mode, or None for attach mode.
-    Precedence: --session-file, then --moodle-userid (resolved under $HERMES_HOME/run)."""
+    The requesting user's id comes from $HERMES_HOME/.moodle_identity (written
+    by the bridge on each request), NOT from CLI args — prevents the agent from
+    impersonating another user."""
+    # Read the trusted identity file written by the bridge per-request.
+    expected_uid = None
+    identity_file = os.environ.get("HERMES_HOME", "/var/www/moodledata/.hermes")
+    identity_path = os.path.join(identity_file, ".moodle_identity")
+    if os.path.exists(identity_path):
+        try:
+            with open(identity_path) as f:
+                ident = json.load(f)
+            expected_uid = ident.get("userid")
+        except Exception:
+            pass  # degrade gracefully if file is unreadable
+
     if args.session_file:
-        return _load_session_file(args.session_file, args.session_ttl)
-    if args.moodle_userid:
-        hermes_home = os.environ.get("HERMES_HOME", "/var/www/moodledata/.hermes")
-        path = os.path.join(hermes_home, "run", f"msession_{args.moodle_userid}.json")
-        return _load_session_file(path, args.session_ttl)
+        return _load_session_file(args.session_file, args.session_ttl,
+                                  expected_uid)
+    if expected_uid:
+        path = os.path.join(identity_file, "run", f"msession.json")
+        return _load_session_file(path, args.session_ttl, expected_uid)
     return None
 
 
@@ -773,29 +802,23 @@ def parse_args(argv=None):
         description="Download Moodle quiz attempts as PDFs based on score "
                     "rankings. Server-side mode (default for the Moodle plugin): "
                     "launch a headless browser and inject the requesting user's "
-                    "Moodle session via --moodle-userid/--session-file — zero "
+                    "Moodle session from the bridge's .moodle_identity file — zero "
                     "user action, no password. Attach mode: connect to an "
                     "already-logged-in browser via --debugger-address. Either "
                     "way, no chromedriver and no credentials in the command.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     # Server-side (session-injection) mode — preferred in the multi-user plugin.
-    p.add_argument("--moodle-userid", default="",
-                   help="Moodle user id whose live session to reuse. Resolves "
-                        "$HERMES_HOME/run/msession_<id>.json (written by the "
-                        "plugin). Launches a headless browser and injects that "
-                        "user's cookie — no browser or password needed.")
     p.add_argument("--session-file", default="",
                    help="Explicit path to a msession JSON file (overrides "
-                        "--moodle-userid). Same effect: server-side session reuse.")
+                        "auto-resolved path from .moodle_identity).")
     p.add_argument("--session-ttl", type=int, default=1800,
                    help="Max age in seconds a session file may be before it is "
                         "rejected as stale (0 disables the check).")
     # Attach mode — connect to a browser the user already opened & logged into.
     p.add_argument("--debugger-address", default="",
                    help="host:port of a Chrome DevTools endpoint of an "
-                        "already-running, already-logged-in browser (attach "
-                        "mode). Ignored if --moodle-userid/--session-file given.")
+                        "already-running, already-logged-in browser (attach mode).")
     p.add_argument("--moodle-url", required=True, help="Moodle base URL")
     p.add_argument("--course-identifier", required=True,
                    help="Target course ID (e.g. '2') or exact course name")
@@ -837,8 +860,8 @@ def main(argv=None):
         log(f"FATAL: {e}")
         return 1
     if not session and not args.debugger_address:
-        log("FATAL: no session source. Pass --moodle-userid/--session-file "
-            "(server-side) or --debugger-address (attach mode).")
+        log("FATAL: no session source. Ensure $HERMES_HOME/.moodle_identity "
+            "exists (written by the bridge) or pass --debugger-address (attach mode).")
         return 1
 
     # Empty keywords => match ALL quizzes (no name filtering). This is the

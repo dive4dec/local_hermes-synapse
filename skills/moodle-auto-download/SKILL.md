@@ -23,7 +23,7 @@ authenticated session:
 
 1. **Server-side session-inject mode (default in the plugin, preferred).** The
    `local_hermesagent` plugin writes a per-user session file
-   (`$HERMES_HOME/run/msession_<userid>.json`) on every chat request, containing
+   (`$HERMES_HOME/run/msession.json`) on every chat request, containing
    the user's live MoodleSession cookie. The tool launches its OWN headless
    Chromium, injects that cookie via CDP `Network.setCookie`, and browses AS that
    user. The user does nothing — no password, no browser launch. Multi-user safe:
@@ -46,17 +46,11 @@ is preserved as `moodle_quiz_downloader_tool.py.selenium.bak`.)
 
 ## Setup (one-time, only if the tool will not run)
 
-    cd $HERMES_HOME/skills/moodle-auto-download
-    pip install -r requirements.txt
+    cd $HERMES_HOME/skills/moodle-auto-download/scripts
+    sudo ./install_deps.sh
 
 Dependencies: `requests` and `websocket-client` only. No Selenium, no
 chromedriver, no database access.
-
-**Before first run, verify both are installed:**
-    python3 -c "import requests; import websocket; print('OK')"
-If `websocket-client` is missing (common on fresh installs where `requirements.txt`
-was not applied), install it explicitly:
-    pip install websocket-client
 
 ## How the agent uses this skill (CRITICAL)
 
@@ -64,17 +58,16 @@ was not applied), install it explicitly:
    exists as a single executable:
    `$HERMES_HOME/skills/moodle-auto-download/moodle_quiz_downloader_tool.py`, and
    its default behavior is to scan **all** quizzes in the course.
-2. **In the Moodle Hermes chat, use server-side mode** — pass `--moodle-userid`
-   (the id from `$USER->id`, which the bridge request already carries as
-   `moodle_userid`) and let the plugin-supplied session file do the auth. You do
-   NOT need to confirm any browser prerequisite; the tool launches its own.
+2. **In the Moodle Hermes chat, use server-side mode** — the tool automatically
+   reads the requesting user's identity from `$HERMES_HOME/.moodle_identity`
+   (written by the ACP bridge on each request). Do NOT pass any user id as a CLI
+   argument. The tool launches its own headless browser; no browser prerequisite.
 3. **Gather the required inputs** (see below) and **run the tool via terminal**.
    The agent's job is only to collect inputs, invoke the tool, and report output.
 
 Example invocation the agent should produce (zero user action):
 
     python3 $HERMES_HOME/skills/moodle-auto-download/moodle_quiz_downloader_tool.py \
-        --moodle-userid "<moodle_userid from bridge request>" \
         --moodle-url "<MOODLE_URL>" \
         --course-identifier "<COURSE_ID or COURSE_NAME>" \
         --high-quantity <HIGH_QUANTITY> \
@@ -99,7 +92,7 @@ Optional extras the agent may pass if the user asks:
   of as a substring. **Use this whenever a quiz name is a prefix of another**,
   e.g. to target `iRAT1` without also catching `iRAT10`. Requires `--keywords` to
   list the exact quiz name(s).
-- `--session-file <path>` — explicit msession JSON path (overrides --moodle-userid).
+- `--session-file <path>` — explicit msession JSON path (bypasses auto-resolution).
 - `--session-ttl <seconds>` — max session-file age (default 1800).
 
 **IMPORTANT — quiz names without "Test"/"Quiz":** Many quizzes are named things
@@ -111,25 +104,25 @@ to change matching behavior — use these flags. The script must remain untouche
 
 ## Server-side session: how auth works (no password, no manual browser)
 
-- `local_hermesagent` writes `$HERMES_HOME/run/msession_<userid>.json` (mode 0600)
+- `local_hermesagent` writes `$HERMES_HOME/run/msession.json` (mode 0600)
   on every chat request, containing the user's MoodleSession cookie name/value,
   derived domain/path/secure, and `written_at`.
-- The tool reads that file (by `--moodle-userid`, which resolves the path),
-  launches a headless Chromium, injects the cookie, and browses as the user.
+- The tool reads the user's identity from `$HERMES_HOME/.moodle_identity`
+  (written by the ACP bridge), resolves the session file path, launches a
+  headless Chromium, injects the cookie, and browses as the user.
 - If the file is missing or older than `--session-ttl` (default 1800s), the tool
   fails with a clear message asking the user to send a fresh chat message first
   (that refreshes the session file).
 
 ## User Inputs Required
 
-* `MOODLE_USERID`: the requesting user's Moodle id (server-side mode; comes from the bridge request's `moodle_userid`).
 * `MOODLE_URL`: The base URL of the Moodle site.
 * `COURSE_IDENTIFIER`: The target course ID (e.g. `2`) or the exact Course Name.
 * `HIGH_QUANTITY`: Number of top-scoring attempts to download.
 * `MEDIUM_QUANTITY`: Number of median-scoring attempts to download (closest to the 50th percentile).
 * `LOW_QUANTITY`: Number of bottom-scoring attempts to download (excluding 0 scores).
 
-(No USERNAME/PASSWORD — authentication is injected from the user's live session.)
+(User identity is automatic — the tool reads it from the bridge's `.moodle_identity` file. No USERNAME/PASSWORD — authentication is injected from the user's live session.)
 
 ## What the tool does (for the agent's awareness — do not reimplement)
 
