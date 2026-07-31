@@ -15,8 +15,7 @@ excluding zero scores).
 **As of 2026-07-17 this tool runs in CDP attach mode.** As of **2026-07-17 (later
 same day)** it ALSO supports a **server-side zero-action mode** that is the
 default inside the local_hermesagent Moodle plugin and needs NO manual browser
-step from the user. See `docs/CHANGE_cdp_attach_2026-07-17.md` (attach mode) and
-`docs/CHANGE_server_side_session_2026-07-17.md` (zero-action mode) for rationale.
+step from the user.
 
 The tool never takes a username/password. There are two ways it gets an
 authenticated session:

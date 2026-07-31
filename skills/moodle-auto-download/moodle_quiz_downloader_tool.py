@@ -499,84 +499,77 @@ class MoodleQuizDownloader:
 
     # -- attempt extraction ----------------------------------------------- #
     def get_attempts(self, quiz: Dict) -> List[Dict]:
-        """
-        Open the overview report for a quiz and parse FINISHED attempts.
-
-        Two correctness issues this handles that naive scraping gets wrong:
-          1. Moodle paginates the overview (default 30/page, controlled by the
-             `pagesize` URL param — NOT `perpage`). We request pagesize=100000
-             and loop every page so we never silently truncate to the first page.
-          2. The overview "Grade" column shows each student's BEST attempt, not
-             the per-attempt grade. When a student has multiple attempts the
-             lower attempt would be mis-graded. So for every distinct attempt we
-             open its own review page and read the authoritative
-             "Grade X out of Y" score.
-
-        Returns a list of dicts: {attempt_id, user_id, grade, review_url}
-        sorted by grade descending.
-        """
         c = self._ensure_session()
         cmid = quiz["cmid"]
-        # CRITICAL: the default overview only shows ONE attempt per enrolled user
-        # (the most recent). To see EVERY submitted attempt we must request
-        # "all users who have a quiz attempt" (attempts=all_with). Without this,
-        # a quiz with 60 attempts (students who retook) only exposes 30 and the
-        # sampling is computed on the wrong N.
         base = (
             f"{self.moodle_url}/mod/quiz/report.php?id={cmid}"
             f"&mode=overview&attempts=all_with"
         )
         log(f"  Reading attempts for quiz '{quiz['name']}'")
 
-        # JS that returns every review.php?attempt= link on the current page.
+        # 1. 修复 JS 脚本：在抓取 review 链接时，同时寻找同一行 (tr) 的 user 链接
         collect_js = """
         (function(){
           var out=[];
           document.querySelectorAll("a[href*='review.php?attempt=']").forEach(function(a){
-            out.push(a.href);
+            var uid = "";
+            var tr = a.closest("tr");
+            if(tr){
+              var ulink = tr.querySelector("a[href*='user/view.php']");
+              if(ulink){
+                var m = ulink.href.match(/[?&]id=(\d+)/);
+                if(m) uid = m[1];
+              }
+            }
+            out.push({href: a.href, user_id: uid});
           });
           return out;
         })()
         """
 
-        # 1) Collect every distinct attempt id across all overview pages.
-        attempt_links: dict = {}  # attempt_id -> review_url
+        attempt_links: dict = {}  # attempt_id -> {"href": url, "user_id": uid}
         page = 1
         while True:
             url = f"{base}&pagesize=100000&page={page}"
             c.navigate(url, wait=2.5)
             before = len(attempt_links)
-            for href in (c.evaluate(collect_js) or []):
-                m = re.search(r"attempt=(\d+)", href or "")
+            
+            # 2. 接收 JS 返回的对象数组，安全保存 user_id
+            for item in (c.evaluate(collect_js) or []):
+                href = item.get("href", "")
+                uid = item.get("user_id", "")
+                m = re.search(r"attempt=(\d+)", href)
                 if m:
-                    attempt_links.setdefault(m.group(1), href)
+                    attempt_links.setdefault(m.group(1), {"href": href, "user_id": uid})
+                    
             added = len(attempt_links) - before
             if added == 0 and page > 1:
-                break  # no new attempts on this page -> stop
+                break
             page += 1
-            if page > 50:  # safety
+            if page > 50:
                 break
 
         if not attempt_links:
-            # Fallback: single page read (some themes expose no pager).
             c.navigate(f"{base}&pagesize=100000", wait=2.5)
-            for href in (c.evaluate(collect_js) or []):
-                m = re.search(r"attempt=(\d+)", href or "")
+            for item in (c.evaluate(collect_js) or []):
+                href = item.get("href", "")
+                uid = item.get("user_id", "")
+                m = re.search(r"attempt=(\d+)", href)
                 if m:
-                    attempt_links.setdefault(m.group(1), href)
+                    attempt_links.setdefault(m.group(1), {"href": href, "user_id": uid})
 
         log(f"  Found {len(attempt_links)} distinct attempt(s); reading each grade...")
 
-        # 2) Read each attempt's own grade from its review page.
         attempts = []
-        for attempt_id, href in attempt_links.items():
+        # 3. 直接使用抓取到的 user_id，彻底废弃错误的正则匹配
+        for attempt_id, data in attempt_links.items():
+            href = data["href"]
+            user_id = data["user_id"]
+            
             grade = self._read_attempt_grade(href)
             if grade is None:
                 continue
-            user_id = ""
-            m = re.search(r"user=(\d+)", href)
-            if m:
-                user_id = m.group(1)
+                
             attempts.append({
                 "attempt_id": attempt_id,
                 "user_id": user_id,
@@ -584,7 +577,6 @@ class MoodleQuizDownloader:
                 "review_url": href,
             })
 
-        # Sort by grade descending.
         attempts.sort(key=lambda a: a["grade"], reverse=True)
         log(f"  Parsed {len(attempts)} finished attempt(s).")
         return attempts
@@ -650,6 +642,22 @@ class MoodleQuizDownloader:
         if not attempts:
             return []
 
+        # 1. 在分配排名和分段前，按 user_id 去重（保留最高分）
+        # 由于传入的 attempts 已经按 grade 降序排列，第一次遇到的 user_id 就是其最高分
+        unique_attempts = []
+        seen_users = set()
+        for a in attempts:
+            uid = a.get("user_id")
+            if uid:
+                if uid in seen_users:
+                    continue  # 跳过该学生的低分尝试
+                seen_users.add(uid)
+            unique_attempts.append(a)
+            
+        # 使用去重后的、真正代表每个学生最高分的数据集覆盖原列表
+        attempts = unique_attempts
+
+        # 2. 重新计算全局排名
         for i, a in enumerate(attempts, start=1):
             a["global_rank"] = i
 
@@ -658,11 +666,13 @@ class MoodleQuizDownloader:
 
         def take(group_list, group_name):
             for a in group_list:
+                # 这里的 attempt_id 去重依然保留，作为安全兜底
                 if a["attempt_id"] in taken_ids:
                     continue
                 taken_ids.add(a["attempt_id"])
                 selected.append({**a, "group": group_name, "rank": a["global_rank"]})
 
+        # 3. 执行分层抽样
         nz = [a for a in attempts if a["grade"] > 0]
 
         if high > 0 and nz:
@@ -674,6 +684,7 @@ class MoodleQuizDownloader:
             take(nz[-low_n:][::-1], "Low")
 
         if medium > 0 and len(attempts) > 0:
+            # 此时的 len(attempts) 是准确的实际学生人数，中位数计算也会恢复准确
             start = max(0, (len(attempts) - medium) // 2)
             end = min(len(attempts), start + medium)
             take(attempts[start:end], "Medium")

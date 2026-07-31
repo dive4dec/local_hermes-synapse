@@ -1,19 +1,40 @@
-#!/bin/bash
-
-# 確保腳本在遇到錯誤時立即停止執行
+#!/bin/sh
+# Exit immediately if a command exits with a non-zero status
 set -e
 
-echo "=== 開始安裝系統依賴 ==="
+echo "Updating apk repositories..."
+apk update
 
-# 1. 安裝 Chromium 瀏覽器 (解決環境中 Chromium 缺失的問題)
-# 這裡假設您的 Pod 運行環境是基於 Debian/Ubuntu
-echo "正在更新系統套件列表並安裝 Chromium..."
-apt-get update
-apt-get install -y chromium
+echo "Installing Python and networking dependencies..."
+# The Python script requires Python 3, requests, and websocket-client. 
+# socat is installed for CDP port tunneling.
+apk add python3 py3-requests py3-websocket-client socat
 
-# 2. 安裝 Python 依賴套件
-echo "正在安裝 requirements.txt 中的 Python 依賴..."
-# 安裝 requests 與 websocket-client 套件[cite: 1]
-pip install -r requirements.txt
+echo "Installing Chromium..."
+# The script requires a Chromium/Chrome binary to launch headless browser sessions.
+apk add chromium
 
-echo "=== 所有依賴安裝完成！ ==="
+echo "Configuring www-data user..."
+# Alpine does not have www-data by default; we must create it.
+if ! id -u www-data > /dev/null 2>&1; then
+    addgroup -g 82 -S www-data
+    adduser -u 82 -D -S -G www-data www-data
+    echo "Created www-data user and group."
+fi
+
+echo "Installing and configuring PHP-FPM..."
+# Install standard PHP-FPM
+apk add php-fpm
+
+# Update the PHP-FPM www.conf file to drop privileges to www-data.
+# PHP-FPM's main service runs as root, but worker processes will run as www-data.
+FPM_CONF=$(find /etc/php* -name "www.conf" | head -n 1)
+if [ -n "$FPM_CONF" ]; then
+    echo "Updating PHP-FPM configuration in $FPM_CONF..."
+    sed -i 's/^user = .*/user = www-data/' "$FPM_CONF"
+    sed -i 's/^group = .*/group = www-data/' "$FPM_CONF"
+else
+    echo "Warning: PHP-FPM www.conf not found. Manual configuration required."
+fi
+
+echo "All dependencies installed and configured successfully!"
