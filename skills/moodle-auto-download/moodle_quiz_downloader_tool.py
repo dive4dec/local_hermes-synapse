@@ -31,7 +31,7 @@ Why CDP instead of Selenium+chromedriver?
 Usage:
     python3 moodle_quiz_downloader_tool.py \
         --debugger-address 127.0.0.1:9222 \
-        --moodle-url https://deep.cs.cityu.edu.hk/equiz \
+        --moodle-url https://xxxxxx \
         --course-identifier "2" \
         --high-quantity 3 --medium-quantity 3 --low-quantity 3
 
@@ -50,7 +50,6 @@ import re
 import sys
 import json
 import time
-import glob
 import base64
 import shutil
 import socket
@@ -115,7 +114,7 @@ class CDPSession:
         return port
 
     @classmethod
-    def launch(cls, timeout: int = 60, user_data_dir: Optional[str] = None):
+    def launch(cls, timeout: int = 60, user_data_dir: Optional[str] = None, cert_spki_hash: Optional[str] = None):
         """Start a local headless Chromium with a debugging port and return a
         connected CDPSession bound to it. Used server-side so no pre-existing
         browser is needed. The browser is OURS and is killed on close()."""
@@ -135,24 +134,41 @@ class CDPSession:
             f"--user-data-dir={user_data_dir}",
             f"--remote-debugging-port={port}", "about:blank",
         ]
+        
+        if cert_spki_hash:
+            args.append(f"--ignore-certificate-errors-spki-list={cert_spki_hash}")
+
         proc = subprocess.Popen(
             args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         self = cls(f"127.0.0.1:{port}", timeout=timeout)
         self._proc = proc
         self._user_data_dir = user_data_dir
         # Wait for the debugging endpoint to come up.
-        deadline = time.time() + 30
-        while time.time() < deadline:
+        try:
+            deadline = time.time() + 30
+            while time.time() < deadline:
+                try:
+                    requests.get(f"http://127.0.0.1:{port}/json/version", timeout=2)
+                    break
+                except Exception:
+                    if proc.poll() is not None:
+                        raise RuntimeError("Launched browser exited before ready.")
+                    time.sleep(0.4)
+            else:
+                raise RuntimeError("Launched browser never opened its debug port.")
+            return self.connect()
+        except Exception as e:
+            log(f"!! Browser launch or connection failed: {e}. Cleaning up spawned process...")
             try:
-                requests.get(f"http://127.0.0.1:{port}/json/version", timeout=2)
-                break
+                proc.kill()
+                proc.wait(timeout=5)
             except Exception:
-                if proc.poll() is not None:
-                    raise RuntimeError("Launched browser exited before ready.")
-                time.sleep(0.4)
-        else:
-            raise RuntimeError("Launched browser never opened its debug port.")
-        return self.connect()
+                pass
+
+            if user_data_dir and os.path.exists(user_data_dir) and user_data_dir.startswith("/tmp/"):
+                shutil.rmtree(user_data_dir, ignore_errors=True)
+
+            raise
 
     def connect(self):
         """Verify the endpoint, open a fresh tab, and attach a WebSocket to it."""
@@ -346,7 +362,8 @@ class CDPSession:
 class MoodleQuizDownloader:
     def __init__(self, moodle_url: str, output_dir: str,
                  debugger_address: Optional[str] = None,
-                 session: Optional[dict] = None):
+                 session: Optional[dict] = None,
+                 cert_spki_hash: Optional[str] = None):
         """Two modes:
           - attach: pass debugger_address, connect to a running logged-in browser.
           - server-side: pass `session` (parsed msession file); launch a local
@@ -354,9 +371,15 @@ class MoodleQuizDownloader:
         `session` takes precedence when both are given.
         """
         self.moodle_url = moodle_url.rstrip('/')
+        if self.moodle_url.startswith("http://"):
+            raise ValueError(
+                f"Insecure connection blocked: '{self.moodle_url}' uses unencrypted HTTP. "
+                "Must use HTTPS to prevent session cookie interception."
+            )
         self.debugger_address = debugger_address
         self.session = session
         self.output_dir = output_dir
+        self.cert_spki_hash = cert_spki_hash
         self.cdp: Optional[CDPSession] = None
 
     # -- browser lifecycle ------------------------------------------------ #
@@ -369,7 +392,7 @@ class MoodleQuizDownloader:
             if self.session:
                 # Server-side mode: launch our own headless browser and inject
                 # the user's live Moodle session cookie so it acts as that user.
-                self.cdp = CDPSession.launch()
+                self.cdp = CDPSession.launch(cert_spki_hash=self.cert_spki_hash)
                 self.cdp.set_cookie(
                     name=self.session["cookie_name"],
                     value=self.session["cookie_value"],
@@ -630,7 +653,8 @@ class MoodleQuizDownloader:
                 if "in progress" in body.lower() and "finished" not in body.lower():
                     return None
                 return self._parse_grade_from_text(body)
-            except Exception:
+            except Exception as e:
+                log(f"!! grade read failed: {e}")
                 time.sleep(1.5)
         return None
 
