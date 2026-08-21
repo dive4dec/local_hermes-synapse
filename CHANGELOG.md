@@ -5,6 +5,48 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+#### moodle-bridge plugin: `moodle_audit_quiz` tool (in-process DB audit)
+New in-process plugin tool that replaces the old `moodle_quiz_audit` **skill**.
+It runs entirely on the Moodle database (no HTML scraping, no child process, no
+session cookie), so the per-session concurrency race that broke the skill (a
+terminal child inherits a stale process-global `HERMES_SESSION_KEY` under
+concurrency) is **structurally impossible** — the tool never spawns a process
+and never reads a per-session env file.
+
+- **Fast-completion check** (AI-misuse signal): flags attempts where
+  `timefinish - timestart < fast_mins` AND `grade_pct >= fast_score`.
+  Defaults `fast_mins=10`, `fast_score=80`.
+- **Off-campus IP check**: pulls each attempt's IP(s) from `logstore_standard_log`
+  (`attempt_viewed`/`attempt_updated`/`attempt_submitted`, joined on
+  `objectid = quiz_attempts.id`), then flags attempts with `campus_ips` set if
+  **any** observed IP is outside all listed CIDRs. `campus_ips` is an optional
+  param/env (CIDR list) — **not hard-coded**; when unset the tool just lists
+  the IPs and flags nothing (the admin judges on campus vs off-campus).
+- **Authorisation**: restricted to staff (manager/teacher role at the course's
+  or site context). Students are denied. Role matching is naming-robust
+  (handles standard `editing teacher` and this site's `editingteacher`).
+- Returns structured JSON (attempts, flags, SEB access-blocks, a logstore
+  retention-window note).
+
+### Removed
+
+#### moodle_quiz_audit skill
+Deleted (repo + deployed NFS). Its HTML-scraping approach was over-engineered
+(the same data is queryable in the DB) and its child-process path was
+unreliable under concurrent admin sessions. Superseded by the
+`moodle_audit_quiz` plugin tool above.
+
+### Notes
+- **Log retention**: attempt IPs live only as long as the logstore retains rows
+  (currently a ~70-day window). Fast-completion data lives in `quiz_attempts`
+  (kept indefinitely). IP audits should be run soon after a quiz.
+
+---
+
 ## [0.2.1] — 2026-07-29
 
 ### Fixed
