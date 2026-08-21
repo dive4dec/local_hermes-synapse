@@ -7,6 +7,8 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-08-21
+
 ### Added
 
 #### moodle-bridge plugin: `moodle_audit_quiz` tool (in-process DB audit)
@@ -41,6 +43,9 @@ unreliable under concurrent admin sessions. Superseded by the
 `moodle_audit_quiz` plugin tool above.
 
 ### Notes
+- **Plugin version bump 1.0.1 → 1.1.0** (`plugins/moodle-bridge/plugin.yaml`): the
+  version field is display-only (the hermes installer never compares it), so this
+  is purely so the dashboard can distinguish pre/post-audit-tool deployments.
 - **Log retention**: attempt IPs live only as long as the logstore retains rows
   (currently a ~70-day window). Fast-completion data lives in `quiz_attempts`
   (kept indefinitely). IP audits should be run soon after a quiz.
