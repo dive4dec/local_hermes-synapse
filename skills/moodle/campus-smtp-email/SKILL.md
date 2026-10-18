@@ -21,7 +21,7 @@ Send genuine outbound email from the phpfpm pod to students or other users.
 ## Workflow
 1. **Resolve the recipient(s).**
    - Single person: `SELECT id,firstname,lastname,email FROM mdl_user WHERE email='...'` (or by id/name).
-   - A Moodle group (e.g. "T02" in cs1302a_26a):
+   - A Moodle group (e.g. "T02" in <coursecode>):
      ```sql
      SELECT u.id,u.firstname,u.lastname,u.email
      FROM mdl_groups g
@@ -51,7 +51,7 @@ $cmd=function($c,$l)use($rd){ fwrite($c,$l."\r\n"); return $rd($c); };
 $ok=function($r,$p){ return strpos($r,$p)===0; };
 
 $rd($c);
-if(!$ok($cmd($c,'EHLO cs1302a.cityu.local'),'250')) exit("EHLO fail\n");
+if(!$ok($cmd($c,'EHLO <coursecode>.cityu.local'),'250')) exit("EHLO fail\n");
 if(!$ok($cmd($c,"MAIL FROM:<$from>"),'250'))  exit("MAIL fail\n");
 if(!$ok($cmd($c,"RCPT TO:<$to>"),'250'))       exit("RCPT fail\n");
 if(!$ok($cmd($c,'DATA'),'354'))                 exit("DATA fail\n");
@@ -59,7 +59,7 @@ $headers=[
   "From: $fromName <$from>",
   "To: $toName <$to>",
   'Subject: =?UTF-8?B?'.base64_encode($subject).'?=',   // base64-safe for non-ASCII
-  'Message-ID: <'.uniqid('hermes',true).'@cs1302a.<domain>>',
+  'Message-ID: <'.uniqid('hermes',true).'@<coursecode>.<domain>>',
   'Date: '.date('r'),
   'MIME-Version: 1.0',
   'Content-Type: text/plain; charset=UTF-8',
@@ -71,7 +71,7 @@ $resp=$rd($c);
 $cmd($c,'QUIT'); fclose($c);
 echo $ok($resp,'250') ? "SENT OK\n$resp" : "FAILED\n$resp";
 ```
-Run: `cd /var/www/moodledata/.hermes && timeout 25 php -d display_errors=1 /tmp/send.php`
+Run: `cd <datadir>/.hermes && timeout 25 php -d display_errors=1 /tmp/send.php`
 
 ## Batch send (group)
 - **One private message per recipient** (set each `RCPT TO` individually). Do NOT use a BCC list — recipients must not see each other, and Reply-To must work.

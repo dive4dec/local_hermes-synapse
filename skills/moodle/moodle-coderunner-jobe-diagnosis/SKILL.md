@@ -76,7 +76,7 @@ Fairness note for reports: queue delay costs *time/frustration*, not accuracy �
 - MCP keyword filter blocks `timecreated` (contains "CREATE") — use raw mysqli for any logstore/step time queries.
 - Pod PHP `date()` is **UTC+8**; logstore/step `timecreated` epochs are UTC — format with `date('H:i:s', $ts)` in PHP (HKT) and note it, or `date(...).'-u'`-compare against `date -u`.
 - Logstore columns on this build: `userid, timecreated, ip, component, action, target, contextid` — **no** `eventname`/`crud`/`objectid`. `contextid` = module context; map via `mdl_context` → `mdl_course_modules` (`cm.instance` = quiz id).
-- Lab PCs: `175.159.202.0/24` are **valid on-site lab IPs** (see `.env MOODLE_AUDIT_CAMPUS_IPS`) — never flag them as off-campus/VPN.
+- Lab PCs: `<lab-cidr>` are **valid on-site lab IPs** (see `.env MOODLE_AUDIT_CAMPUS_IPS`) — never flag them as off-campus/VPN.
 - Jobe probe scripts must be **read-only** (REST `runs`/`languages` only, no config writes) — safe to run while students are active.
 - The check is an **async XMLHttpRequest** (coderunner `amd/src/outputdisplayarea.js`, `runCodeDirect`) with no client timeout — so a *short* freeze = long round-trip, not a JS/PWA block. **BUT** the whole tab CAN be dead for minutes when the lab PC/SEB hangs (a multi-minute zero-request blackout with flat cohort activity = client hang, see Step 3.1) — don't rule out a real client freeze, and never attribute a multi-minute blackout to Jobe.
 - Jobe's admin/status REST endpoints 404 in this build (`restapi/`, `restapi/status`, `admin` all 404) — there is **no exposed runner-queue metric**. The only way to measure real parallelism is the Step 1b capacity ladder against live `runs`.

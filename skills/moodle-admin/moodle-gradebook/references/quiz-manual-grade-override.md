@@ -1,6 +1,6 @@
 # Per-question quiz manual override (mark + comment) — full recipe
 
-Worked session: 2026-09-22, zeroing E-Quiz 2 (quiz 59, cs1302a_26a) for one
+Worked session: 2026-09-22, zeroing E-Quiz 2 (quiz 59, <coursecode>) for one
 student (absent from the sampled-answer explanation; owner required all 16
 scored questions marked 0 **with an explanatory comment**). The mechanism is
 stock Moodle's question-engine manual grade — the same code path the
@@ -90,10 +90,10 @@ stock Moodle's question-engine manual grade — the same code path the
 
 ```php
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php'); require_once('/var/www/html/public/lib/setup.php');
+require('<webroot>/config.php'); require_once('<webroot>/lib/setup.php');
 global $DB;
-require_once('/var/www/html/public/mod/quiz/locallib.php');
-require_once('/var/www/html/public/mod/quiz/classes/quiz_attempt.php');
+require_once('<webroot>/mod/quiz/locallib.php');
+require_once('<webroot>/mod/quiz/classes/quiz_attempt.php');
 
 $attemptobj = \mod_quiz\quiz_attempt::create($attemptid);
 $usageid    = $attemptobj->get_uniqueid();          // == question_attempts.questionusageid

@@ -1,6 +1,6 @@
 ---
 name: moodle-equiz-student-status
-description: "Produce the three student-status cohorts for a quiz in an LTI-enrolled course (e.g. cs1302a_26a / course 3): (A) submitted and scored <= threshold %, (B) enrolled but never submitted, (C) on the LTI group-sync roster but with no Moodle account. Use when the user asks who failed / did not attempt a quiz, or who is in the Canvas/LTI roster but not enrolled."
+description: "Produce the three student-status cohorts for a quiz in an LTI-enrolled course (e.g. <coursecode> / course <cid>): (A) submitted and scored <= threshold %, (B) enrolled but never submitted, (C) on the LTI group-sync roster but with no Moodle account. Use when the user asks who failed / did not attempt a quiz, or who is in the Canvas/LTI roster but not enrolled."
 ---
 
 # Moodle quiz student-status cohorts
@@ -14,25 +14,25 @@ Ready-made script: `scripts/cohorts.php` (see linked files). Usage:
 ```
 php <skill_dir>/scripts/cohorts.php <courseid> "<quiz name>" [threshold_pct]
 # example
-cd /var/www/moodledata/.hermes && php /var/www/moodledata/.hermes/skills/moodle/moodle-equiz-student-status/scripts/cohorts.php 3 "E-Quiz 1" 30
+cd <datadir>/.hermes && php <datadir>/.hermes/skills/moodle/moodle-equiz-student-status/scripts/cohorts.php 3 "E-Quiz 1" 30
 ```
 If the script works, STOP here and present the three sections. Only read on to understand/repair it.
 
 ## Environment
-- Moodle webroot: `/var/www/html/public`. Bootstrap any CLI script with:
+- Moodle webroot: `<webroot>`. Bootstrap any CLI script with:
   ```php
   define('CLI_SCRIPT', true);
   define('MOODLE_INTERNAL', true);
-  require('/var/www/html/public/config.php');
-  require_once('/var/www/html/public/lib/setup.php');
+  require('<webroot>/config.php');
+  require_once('<webroot>/lib/setup.php');
   global $DB;
   ```
-- Run as: `cd /var/www/moodledata/.hermes && php /tmp/script.php` (www-data).
-- `cs1302a_26a` = course id **3**. LTI plugin is `ltigroups` → `mdl_ltigroups_roster`.
+- Run as: `cd <datadir>/.hermes && php /tmp/script.php` (www-data).
+- `<coursecode>` = course id **3**. LTI plugin is `ltigroups` → `mdl_ltigroups_roster`.
 - Do NOT do this through the MCP `moodle_db` `query` tool — it truncates, silently drops data, and rejects keywords. PHP CLI scripts are reliable.
 
 ## The three traps (learned the hard way)
-1. **`sumgrades` is on the QUESTION mark scale, not `mdl_quiz.grade`.** E-Quiz 1 (course 3): real question max = **22**, `quiz.grade` = 80. Computing `sumgrades / quiz.grade` understates every score (e.g. 8/80 = 10% when the truth is 8/22 = 36%). **Authoritative % = gradebook**: `mdl_grade_items` row with `itemmodule='quiz', iteminstance=<quizid>` → its `mdl_grade_grades.finalgrade` (already rescaled to `quiz.grade`). To cross-check the true question max, take any known-correct pair: `actualmax = raw_sumgrades / (finalgrade / quiz.grade)`.
+1. **`sumgrades` is on the QUESTION mark scale, not `mdl_quiz.grade`.** E-Quiz 1 (course <cid>): real question max = **22**, `quiz.grade` = 80. Computing `sumgrades / quiz.grade` understates every score (e.g. 8/80 = 10% when the truth is 8/22 = 36%). **Authoritative % = gradebook**: `mdl_grade_items` row with `itemmodule='quiz', iteminstance=<quizid>` → its `mdl_grade_grades.finalgrade` (already rescaled to `quiz.grade`). To cross-check the true question max, take any known-correct pair: `actualmax = raw_sumgrades / (finalgrade / quiz.grade)`.
 2. **Flaky driver**: `get_records_sql` dies with a bare "Error reading from database" on nested subqueries and on some column combos (e.g. selecting `sumgrades` + `timefinish` without a `timefinish` predicate). Keep every query flat (one table or one simple join, no subqueries) and test each query in isolation if something new fails.
 3. **`finalgrade` NULL ≠ not attempted.** A submitted student can have NULL/'' `finalgrade` (grade not yet computed — e.g. LTI grade push lagging). Classify as "submitted, grade pending" and say so; never count them as not-attempted. A genuine zero is the string `'0.00000'`.
 

@@ -10,7 +10,7 @@ description: "Install Moodle plugins using moosh, handle upgrade registration, a
 ### 1. Check latest compatible version
 
 ```bash
-cd /var/www/html/public && moosh -n plugin-list -v 2>&1 | grep -i <plugin_name>
+cd <webroot> && moosh -n plugin-list -v 2>&1 | grep -i <plugin_name>
 ```
 
 The `-v` flag shows versions. This downloads `~/.moosh/plugins.json` from moodle.org. Without `-v`, `plugin-list` may loop infinitely if the cached JSON is stale.
@@ -26,7 +26,7 @@ Output format: `plugin_name,version,latest_version,download_url`
 ### 2. Install with moosh
 
 ```bash
-cd /var/www/html/public && moosh -n plugin-install -f <plugin_name>
+cd <webroot> && moosh -n plugin-install -f <plugin_name>
 ```
 
 Always use `-f` — Moodle 5.2 is too new for most plugins' version checks, and they refuse without force.
@@ -35,27 +35,27 @@ Always use `-f` — Moodle 5.2 is too new for most plugins' version checks, and 
 
 ```bash
 # aiprovider_* plugins go to ai/provider/
-ls /var/www/html/public/ai/provider/<name>/version.php
+ls <webroot>/ai/provider/<name>/version.php
 
 # local_* plugins go to local/
-ls /var/www/html/public/local/<name>/version.php
+ls <webroot>/local/<name>/version.php
 ```
 
 Fix ownership if needed:
 ```bash
-chown -R www-data:www-data /var/www/html/public/ai/provider/<name>
+chown -R www-data:www-data <webroot>/ai/provider/<name>
 ```
 
 ### 4. Purge caches and run upgrade
 
 ```bash
-cd /var/www/html/public && moosh -n php-eval "purge_all_caches();"
+cd <webroot> && moosh -n php-eval "purge_all_caches();"
 ```
 
 ### 5. Check if it auto-registered
 
 ```bash
-cd /var/www/html/public && moosh -n sql-run "SELECT * FROM mdl_config_plugins WHERE plugin = '<plugin_component>'"
+cd <webroot> && moosh -n sql-run "SELECT * FROM mdl_config_plugins WHERE plugin = '<plugin_component>'"
 ```
 
 If empty, the plugin didn't register automatically (see Pitfalls below).
@@ -65,7 +65,7 @@ If empty, the plugin didn't register automatically (see Pitfalls below).
 If the plugin shows in "To be installed" but won't install, register it manually:
 
 ```bash
-cd /var/www/html/public && moosh -n php-eval "
+cd <webroot> && moosh -n php-eval "
 global \$DB;
 \$DB->insert_record('config_plugins', ['plugin' => '<component>', 'name' => 'version', 'value' => '<version_int>']);
 purge_all_caches();
@@ -98,13 +98,13 @@ mkdir -p /tmp/extract && unzip -o /tmp/plugin.zip -d /tmp/extract
 
 3. **Copy to the correct plugin directory**:
 ```bash
-cp -r /tmp/extract/<unpacked-dir> /var/www/html/public/mod/<pluginname>   # for mod_*
-chown -R www-data:www-data /var/www/html/public/mod/<pluginname>
+cp -r /tmp/extract/<unpacked-dir> <webroot>/mod/<pluginname>   # for mod_*
+chown -R www-data:www-data <webroot>/mod/<pluginname>
 ```
 
 4. **Purge and register** (see "Manual DB Registration" above):
 ```bash
-cd /var/www/html/public && moosh -n php-eval "purge_all_caches();"
+cd <webroot> && moosh -n php-eval "purge_all_caches();"
 # Then insert into mdl_config_plugins as shown above
 ```
 
@@ -132,7 +132,7 @@ If the plugin already exists in `mdl_config_plugins` with a higher version, bump
 Moodle blocks outbound cURL/Guzzle requests to ports other than 80 and 443 by default. If an AI provider endpoint uses a non-standard port (e.g., 8000), the request is silently blocked with "Something Went Wrong". Fix:
 
 ```bash
-cd /var/www/html/public && moosh -n sql-run "UPDATE mdl_config SET value = '443\n80\n8000' WHERE name = 'curlsecurityallowedport'"
+cd <webroot> && moosh -n sql-run "UPDATE mdl_config SET value = '443\n80\n8000' WHERE name = 'curlsecurityallowedport'"
 ```
 
 Or via **Site admin → Security → HTTP Security → Allowed ports**. Don't forget to purge caches after.

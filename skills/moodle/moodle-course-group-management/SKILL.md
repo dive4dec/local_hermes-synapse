@@ -63,7 +63,7 @@ $DB->insert_record('quiz_overrides', [
 
 Always purge caches after: `cache_helper::purge_by_event('all_group_overrides_added')` + `moosh -n cache-clear`.
 
-## cs1302_26a group reference (course 7)
+## <other-coursecode> group reference (course <other-coursecid>)
 
 Active lab groups taught by course instructors only:
 

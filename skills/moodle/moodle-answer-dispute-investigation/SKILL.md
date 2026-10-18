@@ -14,16 +14,16 @@ This is **forensics of one student's stored submission**, not an integrity audit
 stored** for that slot, when, with the raw evidence, plus what the code can and
 cannot do.
 
-Environment: this box is a Moodle 5.x fork (dive/socratic, cs1302a_26a = course
+Environment: this box is a Moodle 5.x fork (dive/socratic, <coursecode> = course
 3). Schema traps below are for THIS build.
 
 ## Step 0 — pin the three identities (skipping this costs a full wasted run)
 1. **Student**: `mdl_user` by firstname+lastname. LTI usernames are opaque
    (`enrol_lti<hex>`); emails look like `<initials><n>-c@<student-domain>`.
-   Disambiguate by surname — there are multiple LAU Tsz *Ying*/Tsz *Long* etc.
+   Disambiguate by surname — there are multiple students sharing a surname / given-name pattern (e.g. two with the same surname)
 2. **Quiz**: `mdl_quiz` by name **AND course**. ⚠️ Parallel course instances exist:
    course 2 and course 6 each carry their own "E-Quiz 4"/"CE-Quiz 4" (e.g. quiz 26
-   cm 61 course 2; quiz 63 cm 160 course 3; quiz 161 course 6). Confirm the
+   cm 61 course 2; quiz 63 cm 160 course <cid>; quiz 161 course 6). Confirm the
    student's enrolled course and use THAT course's quiz.
 3. **Question**: the question the student describes (stem text + option count).
    Note its id(s) — remember 5.x questions are versioned (see Step 2).
@@ -105,7 +105,7 @@ courseid, other (JSON payload), timecreated, origin, ip, realuserid`.
 - Retention is short (a few months; on 2026-09-28 it spanned 07-16..09-28).
 
 ## Step 5 — question-type source review (rule out a server bug)
-For multichoice: `/var/www/html/public/question/type/multichoice/question.php`,
+For multichoice: `<webroot>/question/type/multichoice/question.php`,
 class `qtype_multichoice_multi_question`:
 - `get_expected_data()` → `choice<N>` PARAM_BOOL per option (one per `_order`
   position).
@@ -193,11 +193,11 @@ request is a layered decision, not a single patch. Order by risk:
   your aliases** (`AS created`, `AS qcreated` all trip it; `timecreated` does
   too). Use `AS tc` or drop the column.
 - PHP CLI bootstrap MUST be `define('CLI_SCRIPT',true); define('MOODLE_INTERNAL',
-  true); require('/var/www/html/public/config.php'); require_once('/var/www/
+  true); require('<webroot>/config.php'); require_once('/var/www/
   html/public/lib/setup.php'); global $DB;` — omitting config.php or
   MOODLE_INTERNAL → silent exit 1, zero output. PHP stdout is often swallowed by
   the terminal wrapper → `fwrite` results to `/tmp/out.txt` and read that.
-  Run: `cd /var/www/moodledata/.hermes && timeout 300 php -d display_errors=1 /tmp/x.php`.
+  Run: `cd <datadir>/.hermes && timeout 300 php -d display_errors=1 /tmp/x.php`.
 - Full schema-trap bank: `moodle-php-cli-pitfalls` (esp. §8a/8b/11b + §12).
 
 ## Case files

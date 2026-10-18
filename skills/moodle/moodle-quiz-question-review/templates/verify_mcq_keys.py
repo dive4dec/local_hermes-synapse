@@ -42,7 +42,7 @@ oracle is how you invent a false bug.
 """
 import json, sys, io, re, subprocess, tempfile, os
 
-PY = sys.executable or '/var/www/moodledata/.hermes/venv/bin/python3'
+PY = sys.executable or $DATA_DIR.'/.hermes/venv/bin/python3'
 
 
 def clean_md(s: str) -> str:

@@ -1,6 +1,6 @@
 # Quiz completion "Receiving a passing grade" — recipe & verification
 
-Worked 2026-08-28 on cs1302a_26a (course 3): 13 Mock Exam/Midterm quizzes that had
+Worked 2026-08-28 on <coursecode> (course <cid>): 13 Mock Exam/Midterm quizzes that had
 "Receiving a grade" but were missing the "Receiving a passing grade" sub-option (and, for the
 midterms, the pass mark itself). User spec: Mock Exams pass at 30/100, Mock Midterms pass at 6/20.
 
@@ -22,7 +22,7 @@ midterms, the pass mark itself). User spec: Mock Exams pass at 30/100, Mock Midt
   (via `grade_floats_different($gradeitem->gradepass, 0)`).
 - Find the item: `grade_items WHERE courseid=.. AND itemtype='mod' AND itemmodule='quiz'
   AND iteminstance=<quizid> AND itemnumber=0`.
-- A correct reference row (course 3, Mock Midterm 25B, cm 217): completion=2,
+- A correct reference row (course <cid>, Mock Midterm 25B, cm 217): completion=2,
   completiongradeitemnumber=0, completionpassgrade=1, item gradepass=6/20.
 
 ## Bulk apply (backup → update → readback → cache)
@@ -40,7 +40,7 @@ $giids = [/* ... */];          // grade_items ids (verify each row's iteminstanc
 // 3) $DB->execute("UPDATE {grade_items} SET gradepass=6.00000 WHERE id IN (...)");
 // 4) read back and assert; then:
 ```
-`cd /var/www/html/public && moosh -n cache-clear`
+`cd <webroot> && moosh -n cache-clear`
 
 **Pitfall hit:** `$DB->execute()` returns **boolean true on success, NOT a rowcount** —
 `if ($n !== 13)` falsely reports "1 row updated" when 13 rows actually changed. Verify by
@@ -64,7 +64,7 @@ $details = (new core_completion\cm_completion_details($completioninfo, $cminfo, 
   AND `completionpassgrade` after the fix.
 - Per student: `$details['completionpassgrade']->status` → 2=PASS, 3=FAIL, 0=INCOMPLETE.
 - Resolve the item exactly as the engine does:
-  `grade_item::fetch(['courseid'=>3,'itemtype'=>'mod','itemmodule'=>'quiz','iteminstance'=>$quizid,'itemnumber'=>0])`.
+  `grade_item::fetch(['courseid' => <cid>,'itemtype'=>'mod','itemmodule'=>'quiz','iteminstance'=>$quizid,'itemnumber'=>0])`.
 - Bootstrap notes for CLI scripts: `completion_info` needs no import (it's in
   lib/completionlib.php loaded by config); `grade_item` needs
   `require_once($CFG->libdir.'/gradelib.php')`; `course_get_course()` does not exist —
@@ -76,7 +76,7 @@ $details = (new core_completion\cm_completion_details($completioninfo, $cminfo, 
 : (score >= gradepass ? COMPLETE_PASS : COMPLETE_FAIL)`. Treating NULL as 0 (expecting FAIL
 for no-grade) produces false mismatches — NULL means "no grade recorded" = INCOMPLETE.
 
-## Data observations from this run (cs1302a_26a, course 3)
+## Data observations from this run (<coursecode>, course <cid>)
 
 - Every mock quiz's `grade_grades` rows exist for the 2 LTITEST accounts (users 496/497)
   but with NULL raw/final — placeholder rows from enrolment, not real scores.

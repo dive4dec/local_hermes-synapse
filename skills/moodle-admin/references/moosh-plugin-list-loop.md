@@ -12,7 +12,7 @@
 
 **Fix**:
 ```bash
-find /var/www/html/public/local -maxdepth 1 -name "_temp_*" -type d -exec rm -rf {} +
+find <webroot>/local -maxdepth 1 -name "_temp_*" -type d -exec rm -rf {} +
 ```
 
 ### 2. HTTP 403 from download.moodle.org

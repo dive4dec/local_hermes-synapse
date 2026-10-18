@@ -4,9 +4,9 @@ The audit that flagged a real working student. Keep this as the calibration for
 "am I counting the right verification signal?"
 
 ## What happened
-An audit of E-Quiz 1 (quiz 57, cs1302a_26a) counted self-verification as
+An audit of E-Quiz 1 (quiz 57, <coursecode>) counted self-verification as
 `state='complete'` steps only (the adaptive-behaviour state set by an MC "Check").
-CHENG Tsz Kin (attempt 15707) came out as "3 checks, 58%, no verification on
+a student (attempt 15707) came out as "3 checks, 58%, no verification on
 essentially all code questions" and landed in the suspicion list. The instructor
 checked the quiz review page and objected: the student had prechecked a lot.
 
@@ -46,7 +46,7 @@ GROUP BY qast.questionattemptid;
 in one pass — note a LEFT JOIN multiplies rows when a step has multiple
 step_data rows; count distinct stepids or the flag column, not raw rows.)
 
-After the fix CHENG Tsz Kin ranked 183/186 (bottom) — correctly unflagged. The
+After the fix the same student ranked 183/186 (bottom) — correctly unflagged. The
 true survivors of E-Quiz 1's "few verifications" signal were students with
 **0 MC-Checks** (e.g. 10 MC + 0 checks + 12–15 code Prechecks, 91–100%,
 12–53 min) — the anomaly moved to the MC side, where skipping Check is

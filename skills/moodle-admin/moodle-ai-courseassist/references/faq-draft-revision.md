@@ -1,4 +1,4 @@
-# Case: rejected FAQ draft about AI features (cs1302a_26a CE-Quiz FAQ)
+# Case: rejected FAQ draft about AI features (<coursecode> CE-Quiz FAQ)
 
 Session 2026-08-23. User asked for a forum FAQ post "How to use AI features in CE-Quiz?". First draft was rejected for three factual errors, each fixable by reading `public/ai/placement/courseassist/` source:
 

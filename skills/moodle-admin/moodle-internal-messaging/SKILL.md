@@ -20,9 +20,9 @@ Build a `\core\message\message` event object and call `message_send()`. This wor
 
 ```php
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
-require_once('/var/www/html/public/message/lib.php');
+require('<webroot>/config.php');
+require_once('<webroot>/lib/setup.php');
+require_once('<webroot>/message/lib.php');
 global $DB, $PAGE;
 
 $USERFROM = <sender uid>;   // account whose NAME shows in the "from" header (see pitfall 1)
@@ -47,7 +47,7 @@ $ev->smallmessage        = $subject;
 $ev->timecreated         = time();
 $ev->notification        = 1;               // 1 => also create a popup notification
 $ev->customdata          = [
-    'placeholders' => ['contextname' => 'CS1302A Introduction to Computer Programming'],
+    'placeholders' => ['contextname' => '<coursecode> Introduction to Computer Programming'],
 ];
 $rid = message_send($ev);                   // returns the mdl_notifications.id (int)
 echo "sent notification id=$rid\n";

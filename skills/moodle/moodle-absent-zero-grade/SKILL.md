@@ -5,7 +5,7 @@ description: Mark quiz grade zero for absent students (all questions) OR for a s
 
 # Zero-grade absent quiz students + individualized notices
 
-Full pipeline that worked for CS1302A E-Quiz 2 (2026-09-24): per-question manual
+Full pipeline that worked for <coursecode> E-Quiz 2 (2026-09-24): per-question manual
 zero with a standard absence comment, gradebook recompute, E-Quiz vs CE-Quiz
 activity comparison per student, and individualized urgent emails.
 
@@ -77,13 +77,13 @@ wrong verification join gave false "0 steps" alarms):
 Bootstrap + run:
 ```
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php'); require_once('/var/www/html/public/lib/setup.php');
-require_once('/var/www/html/public/mod/quiz/locallib.php');
-require_once('/var/www/html/public/mod/quiz/classes/quiz_attempt.php');
-require_once('/var/www/html/public/question/engine/lib.php');
-require_once('/var/www/html/public/question/engine/datalib.php');
+require('<webroot>/config.php'); require_once('<webroot>/lib/setup.php');
+require_once('<webroot>/mod/quiz/locallib.php');
+require_once('<webroot>/mod/quiz/classes/quiz_attempt.php');
+require_once('<webroot>/question/engine/lib.php');
+require_once('<webroot>/question/engine/datalib.php');
 ```
-`cd /var/www/moodledata/.hermes && timeout 300 php -d display_errors=1 /tmp/x.php`
+`cd <datadir>/.hermes && timeout 300 php -d display_errors=1 /tmp/x.php`
 
 Standard comment used (approved by instructor, 2026-09-24):
 "Marked 0: the student was absent from the lecture session where answers were

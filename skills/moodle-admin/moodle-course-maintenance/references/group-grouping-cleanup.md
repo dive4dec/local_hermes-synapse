@@ -4,7 +4,7 @@
 /usr/bin/bash: _longopt: line 6: syntax error near unexpected token `('
 /usr/bin/bash: _longopt: line 6: ` --!(no-*)dir*)'
 /usr/bin/bash: error importing function definition for `_longopt'
-# Group & Grouping Cleanup (CS1302 courses)
+# Group & Grouping Cleanup (<course> courses)
 
 When removing stale lab/tutorial groups and their quiz overrides.
 
@@ -37,7 +37,7 @@ group labels from `mdl_groups`.
 
 1. **List first, confirm second.** Show a table: group name, group ID, override count, reason for removal. Wait for explicit confirmation. Do NOT list from memory — query the DB immediately before presenting.
 2. **Delete overrides first** (`quiz_overrides` where `groupid` = X), then `groups_members`, then the `groups` row. Removing the group first orphans the overrides.
-3. **Purge cache** (`cd /var/www/html/public && moosh -n cache-clear`) — user will not see the removal otherwise.
+3. **Purge cache** (`cd <webroot> && moosh -n cache-clear`) — user will not see the removal otherwise.
 
 ## Related: adding a group to a grouping
 
@@ -54,7 +54,7 @@ group labels from `mdl_groups`.
 ## Pitfalls
 
 - **Cross-semester ID rot:** group IDs from an earlier semester (or from the `moodle-cequiz-schedule-propagation` skill's reference table) may no longer exist — resolve by name at runtime.
-- **Demo CE-Quiz has overrides** (e.g., quiz 56 in cs1302a_26a, quiz 192 in cs1302_26a) — include it when propagating a new group's overrides.
+- **Demo CE-Quiz has overrides** (e.g., quiz 56 in <coursecode>, quiz 192 in <other-coursecode>) — include it when propagating a new group's overrides.
 - **Don't confuse quiz CMs:** when listing "CE-Quiz N" changes, verify CM→quiz→name mapping by query in the same step you present the plan. In one session, E-Quiz CMs 51/77 were treated as CE-Quiz CMs and the wrong override row was swapped (Wed slot instead of Mon slot); both required a revert.
 - **`$DB->get_records_sql()` fails** in this environment — use `get_records()`/`get_record()` with hash conditions.
 - **`core_course\output\local\cache\modinfo::purge()` does not exist** — use `cm_info::purge_coursecache($courseid)` + moosh cache-clear.

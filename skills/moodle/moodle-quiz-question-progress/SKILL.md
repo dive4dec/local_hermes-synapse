@@ -18,7 +18,7 @@ This is a **question-level** status — distinct from attempt-level cohorts (who
 
 ## Inputs
 
-- `quizid` (int) — the quiz's `mdl_quiz.id` (e.g. CE-Quiz 1 = 58 in cs1302a_26a).
+- `quizid` (int) — the quiz's `mdl_quiz.id` (e.g. CE-Quiz 1 = 58 in <coursecode>).
 - `slot` (int) — the **slot number** of the question. Slot 1 is often a 0-mark "Information" placeholder; the first *real* question is usually slot 2. Map slots to question names first (see below) so you confirm you're reading the right question.
 - `courseid` (int, default 3) — for lab/group enrichment.
 
@@ -28,9 +28,9 @@ If the script runs, present its three lists (answered / gave up / not reached) a
 
 ## Environment
 
-Moodle webroot `/var/www/html/public`; run as www-data:
+Moodle webroot `<webroot>`; run as www-data:
 ```
-cd /var/www/moodledata/.hermes && php /tmp/script.php
+cd <datadir>/.hermes && php /tmp/script.php
 ```
 Bootstrap with `define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true); require config.php; require lib/setup.php; global $DB;`.
 

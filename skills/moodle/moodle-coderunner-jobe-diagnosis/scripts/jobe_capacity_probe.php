@@ -1,4 +1,8 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 /**
  * jobe_capacity_probe.php — measure a Jobe pod's REAL concurrent-execution
  * parallelism (read-only; safe to run during a live quiz).
@@ -16,8 +20,8 @@
  */
 if (!defined('CLI_SCRIPT')) die('CLI only');
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php');
+require_once($WEBROOT.'/lib/setup.php');
 
 // jobe_host / jobe_apikey from coderunner config (single-host assumption)
 $host = $DB->get_record('config_plugins', ['plugin' => 'qtype_coderunner', 'name' => 'jobe_host'], 'value');

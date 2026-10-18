@@ -11,7 +11,7 @@ Y but scored **below a threshold**. This is a *two-quiz* cross-check, distinct
 from single-quiz cohorts (`moodle-equiz-student-status`: A/B/C on one quiz) and
 question-level progress (`moodle-quiz-question-progress`).
 
-Worked example (2026-09-28, course 3 cs1302a_26a): "students attempting CE-Quiz 3
+Worked example (2026-09-28, course <cid> <coursecode>): "students attempting CE-Quiz 3
 (id 62) now who have not attempted E-Quiz 3 (id 61) or got below 50%." Result:
 of 64 same-day starters, **3 real students** flagged (2 never did E-Quiz 3, 1 at
 37.7%) + **2 helpers** also took it (excluded from the student cohort).
@@ -34,7 +34,7 @@ of 64 same-day starters, **3 real students** flagged (2 never did E-Quiz 3, 1 at
 ## Procedure (PHP CLI — reliable; MCP `query` is truncated/flaky here)
 
 Bootstrap: `define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php'); require_once('/var/www/html/public/lib/setup.php');
+require('<webroot>/config.php'); require_once('<webroot>/lib/setup.php');
 global $DB; $P = $DB->get_prefix(); date_default_timezone_set('Asia/Hong_Kong');`
 
 1. **Resolve ids + scales.** `mdl_quiz` by (course, name) for both. The **threshold
@@ -68,7 +68,7 @@ global $DB; $P = $DB->get_prefix(); date_default_timezone_set('Asia/Hong_Kong');
      LTI roster who …" ⇒ compute the set from `mdl_ltigroups_roster` (courseid-scoped,
      `userid` non-null) directly; do NOT substitute the enrolled-based cohort from
      `moodle-equiz-student-status` (helpers/test/manual enrolments make enrolled ⊋
-     roster — 228 vs 203 in course 3, 2026-09-28 — even though the real-student
+     roster — 228 vs 203 in course <cid>, 2026-09-28 — even though the real-student
      not-attempted list happened to be the same 13 either way). Roster table schema +
      flaky-`IN` workaround: `moodle-php-cli-pitfalls` §8c.
    - Keep only users with the **student role** at the level-50 course context
@@ -76,7 +76,7 @@ global $DB; $P = $DB->get_prefix(); date_default_timezone_set('Asia/Hong_Kong');
      If the role join returns **empty**, drop a `component='core'` filter before
      concluding "no roles" (see pitfall below).
    - **Exclude helpers** by group membership — match the `helpers` group by
-     **name** (id 89 in course 3, verify per semester), not by id or by start time.
+     **name** (id 89 in course <cid>, verify per semester), not by id or by start time.
      Helpers open a week early with unlimited attempts, so off-schedule starts
      (01:23, 09:48) are normal — list them separately, don't flag them.
    - **Drop phantom LTI accounts** (see pitfall).
@@ -103,8 +103,8 @@ also pulls helpers/test/manual enrolments) and not C (roster-but-no-account):
 it is roster-with-an-account **minus** finished attempts.
 
 1. **Roster universe:** `get_records('ltigroups_roster', ['courseid'=>$cid])`
-   once (203 rows in course 3 — small; §8c: don't `IN (…)` this table). Keep
-   rows where `userid` is non-null/`>0` (course 3: 0 unmapped). Schema:
+   once (203 rows in course <cid> — small; §8c: don't `IN (…)` this table). Keep
+   rows where `userid` is non-null/`>0` (course <cid>: 0 unmapped). Schema:
    `id, courseid, eid, assignments, userid, timesynced, timecreated` — the
    student's email is `eid`, name comes from `mdl_user` via `userid`.
 2. **Submitted set:** flat `SELECT userid, MAX(timefinish) mf FROM
@@ -120,9 +120,8 @@ it is roster-with-an-account **minus** finished attempts.
    Lab/Lec. Once the quiz window has CLOSED the list is final (state the close
    time); while it's still open, note it's a snapshot.
 
-Verified result (E-Quiz 4, id 63, course 3, closed 2026-10-04): 5 real
-students — HE Tsz Fei, HUANG Chenyue, LIU Xuan Lin, WANG Jia Hao, YERGANAT
-Miras.
+Verified result (E-Quiz 4, id 63, course <cid>, closed 2026-10-04): 5 real
+students (names omitted for privacy).
 
 ## Follow-up variant: "did these non-submitters attempt quiz Z?"
 
@@ -175,7 +174,7 @@ list, asked "did these students attempt CE-Quiz 4?"):
 
 ## Reference
 
-- cs1302a_26a course id = 3. Quiz ids shift per semester — resolve by name.
+- <coursecode> course id = 3. Quiz ids shift per semester — resolve by name.
   CE-Quiz N runs the week of Lab N; E-Quiz N runs one week earlier (see
   `moodle-cequiz-management`).
-- Helpers group = id 89 in course 3 (verify). Lab IPs = `175.159.202.0/24`.
+- Helpers group = id 89 in course <cid> (verify). Lab IPs = `<lab-cidr>`.

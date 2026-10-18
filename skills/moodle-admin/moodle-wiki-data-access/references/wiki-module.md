@@ -1,6 +1,6 @@
 # mod/wiki schema & content locations (Moodle 5.x)
 
-Verified against `/var/www/html/public/mod/wiki/db/install.xml` (schema VERSION 20250414) on this site.
+Verified against `<webroot>/mod/wiki/db/install.xml` (schema VERSION 20250414) on this site.
 
 ## Tables
 
@@ -40,11 +40,11 @@ $vers = $DB->get_records('wiki_versions', ['pageid' => $page->id]);
 
 ## Format constants
 
-`FORMAT_MOODLE=0`, `FORMAT_HTML=1`, `FORMAT_PLAIN=2`, `FORMAT_WIKI=3` (deprecated), `FORMAT_MARKDOWN=4` — defined in `/var/www/html/public/lib/weblib.php` (~lines 42-65). Both `wiki.introformat` and `wiki_versions.contentformat` use these. `introformat=4` = Markdown, so `*single asterisk*` in the intro renders as italics.
+`FORMAT_MOODLE=0`, `FORMAT_HTML=1`, `FORMAT_PLAIN=2`, `FORMAT_WIKI=3` (deprecated), `FORMAT_MARKDOWN=4` — defined in `<webroot>/lib/weblib.php` (~lines 42-65). Both `wiki.introformat` and `wiki_versions.contentformat` use these. `introformat=4` = Markdown, so `*single asterisk*` in the intro renders as italics.
 
 ## Editing
 
-- **Description:** `$DB->update_record('wiki', ...)` on `intro`/`introformat` (set `timemodified` too), then `cd /var/www/html/public && moosh -n cache-clear`.
+- **Description:** `$DB->update_record('wiki', ...)` on `intro`/`introformat` (set `timemodified` too), then `cd <webroot> && moosh -n cache-clear`.
 - **Page text:** prefer the UI. Direct DB writes must insert a new `wiki_versions` row at `version = max+1` and update page cache/timestamps, or UI/history desync. Never treat `wiki_pages.cachedcontent` as editable source.
 
 ## Verifying in the UI (login-gated site)

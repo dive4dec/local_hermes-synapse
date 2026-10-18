@@ -9,7 +9,7 @@ $event->description = format_module_intro('quiz', $quiz, $cmid, false); // pre-f
 $event->format = FORMAT_HTML;
 ```
 
-So editing `mdl_quiz.intro` (or any module's intro) **directly in the DB** leaves existing `mdl_event` rows holding the old text until the events are regenerated. Symptom (2026-08-29, cs1302a_26a CE-Quizzes): the quiz pages showed "SEB" while the course calendar still showed "Safe Exam Browser" in every opens/closes event.
+So editing `mdl_quiz.intro` (or any module's intro) **directly in the DB** leaves existing `mdl_event` rows holding the old text until the events are regenerated. Symptom (2026-08-29, <coursecode> CE-Quizzes): the quiz pages showed "SEB" while the course calendar still showed "Safe Exam Browser" in every opens/closes event.
 
 Two corollaries:
 - The snapshot is **pre-filtered** — calendar text already contains resolved `<a class="autolink">` tags from whatever activity names existed at build time (e.g. "midterm" → Midterm quiz, "Exam" → Exam quiz). Rebuilding events picks up current autolinks.
@@ -20,7 +20,7 @@ Two corollaries:
 `quiz_refresh_events($courseid, $instance)` → `quiz_update_events($quiz)`: rebuilds that quiz's events from current settings. It diffs against the old events, so unchanged times/overrides/priorities are untouched — only names/descriptions get rewritten. There is no single "refresh all events" call in this flow; loop per quiz:
 
 ```php
-require_once('/var/www/html/public/mod/quiz/lib.php');
+require_once('<webroot>/mod/quiz/lib.php');
 foreach ($quizids as $qid) {
     $quiz = $DB->get_record('quiz', ['id' => $qid], '*', MUST_EXIST);
     quiz_refresh_events($courseid, $quiz);

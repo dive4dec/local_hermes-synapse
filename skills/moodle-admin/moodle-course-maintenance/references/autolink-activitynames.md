@@ -11,7 +11,7 @@ This bites in two task classes:
 1. **"Why is this word linked to the wrong activity?"** (diagnosis)
 2. **A string rename that changes which link fires** — e.g. "Safe Exam Browser" → "SEB"
    flips the autolink from the Exam quiz to the SEB *page* (verified 2026-08-29, CE-Quiz
-   instructions in cs1302a_26a).
+   instructions in <coursecode>).
 
 ## Matching rules (`filter/activitynames/classes/text_filter.php` + `lib/filterlib.php`)
 
@@ -52,8 +52,8 @@ unmodified **control** context in the same logged-in run.
 
 ```php
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require('<webroot>/config.php');
+require_once('<webroot>/lib/setup.php');
 global $USER; $USER = get_admin();          // needed for has_view()/uservisible checks
 $ctx = context_module::instance(<CMID>);    // any CM in the course; ideally the one you're editing
 echo format_text('students must use the **SEB on a Lab PC** to do the test.',

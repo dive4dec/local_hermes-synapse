@@ -1,4 +1,8 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 // extract_quiz.php — Step 0 + Step 1 of the moodle-quiz-question-review skill.
 //
 // Usage:  php extract_quiz.php <quizid> <outtag>
@@ -21,7 +25,7 @@
 // Feed the resulting JSON to templates/run_model_answers.py and
 // templates/verify_mcq_keys.py.
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php'); require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php'); require_once($WEBROOT.'/lib/setup.php');
 global $DB;
 $qid = (int)$argv[1]; $tag = $argv[2];
 

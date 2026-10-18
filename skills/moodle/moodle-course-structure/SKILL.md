@@ -73,12 +73,12 @@ Activities move with their topic automatically: `course_modules.section` stores 
 Chain the cache clear into the same command line as the script — the user has had to remind repeatedly:
 
 ```bash
-php /tmp/script.php 2>&1 && cd /var/www/html/public && moosh -n cache-clear
+php /tmp/script.php 2>&1 && cd <webroot> && moosh -n cache-clear
 ```
 
 Afterwards re-run a read-only verification script that prints the final state (group list, section order, override table) and confirms it matches intent before reporting done.
 
-## Rule 6: Midterm venue / invigilator labels (cs1302a_26a, course 3)
+## Rule 6: Midterm venue / invigilator labels (<coursecode>, course <cid>)
 
 The per-group **midterm venue + invigilator** labels live in the **orphan section 21** (the section that actually holds the Midterm quizzes + rules page). The section *row* literally named "Midterm Quiz" (`course_sections.id=21`, `section=13`) is a **different, hidden, EMPTY** row — do not confuse them.
 
@@ -107,6 +107,6 @@ Label format (moodle format 0, HTML):
 ## Deployment reference
 
 - User workflow for all of the above: **list the exact changes, wait for explicit confirmation, then apply.**
-- Courses: cs1302_25b (id=2), cs1302a_26a (id=3), cs1302_26a (id=7).
-- CE-Quiz quizzes: course 2 → 19–37 (demo 19, CE odds 21–37); course 7 → 192–210 (demo 192, CE evens 194–210); course 3 → 56–74 (demo 56, CE evens 58–74).
-- User's Obsidian vault: `/var/www/moodledata/.hermes/obsidian-vault/` — when the user says "write it to obsidian", write a `.md` note there (do not go hunting for the path).
+- Courses: <course>_25b (id=2), <coursecode> (id=3), <other-coursecode> (id=7).
+- CE-Quiz quizzes: course 2 → 19–37 (demo 19, CE odds 21–37); course <other-coursecid> → 192–210 (demo 192, CE evens 194–210); course <cid> → 56–74 (demo 56, CE evens 58–74).
+- User's Obsidian vault: `<datadir>/.hermes/obsidian-vault/` — when the user says "write it to obsidian", write a `.md` note there (do not go hunting for the path).

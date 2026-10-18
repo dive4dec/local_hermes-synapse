@@ -74,7 +74,7 @@ Use `moosh php-eval` or a PHP script with `CLI_SCRIPT`:
 
 ```php
 $lti = $DB->get_record('lti', ['id' => $lti_id]);
-$lti->instructorcustomparameters = 'next=../user-redirect/git-pull?repo=https://github.com/dive4dec/cs1302a_26a&urlpath=lab/tree/cs1302a_26a/Lecture2/Values_and_Variables.ipynb';
+$lti->instructorcustomparameters = 'next=../user-redirect/git-pull?repo=https://github.com/dive4dec/<coursecode>&urlpath=lab/tree/<coursecode>/Lecture2/Values_and_Variables.ipynb';
 $DB->update_record('lti', $lti);
 ```
 
@@ -234,7 +234,7 @@ SET lti.coursemodule = cm.id;
 
 ## LTI group sync roster (`ltigroups` plugin) — "who hasn't logged in yet?"
 
-The `ltigroups` plugin syncs a student roster (pushed from the course schedule) and auto-creates Moodle accounts on first LTI launch. Tables (verified 2026-08-29, course 3):
+The `ltigroups` plugin syncs a student roster (pushed from the course schedule) and auto-creates Moodle accounts on first LTI launch. Tables (verified 2026-08-29, course <cid>):
 
 - **`mdl_ltigroups_roster`** — `id, courseid, eid, assignments, userid, timesynced, timecreated`
   - `eid` = the student's **CityU email** (the join key; the roster stores NO display name)
@@ -263,7 +263,7 @@ If a downstream tool (JupyterHub, a grade service, …) needs a **stable** per-s
 
 **What Moodle actually sends to the tool on each launch** (`mod/lti/locallib.php` `lti_build_request()`, ~line 804):
 - `user_id` = `$USER->id` — the Moodle user id. **Stable and unique** — the best key.
-- `ext_user_username` = `$USER->username` — for LTI-1.3 users this is `enrol_lti_13_<sha1(iss_sub)>`, derived from the platform `sub`, so it is **stable** (email-independent). Sent when the instance has `sendname = Always` (the JupyterHub instances in course 3 do).
+- `ext_user_username` = `$USER->username` — for LTI-1.3 users this is `enrol_lti_13_<sha1(iss_sub)>`, derived from the platform `sub`, so it is **stable** (email-independent). Sent when the instance has `sendname = Always` (the JupyterHub instances in course <cid> do).
 - `lis_person_sourcedid` = `$USER->idnumber` — **empty for every LTI-1.3 user** on this site (verified 2026-09-10: uid 618 `idnumber` blank; only 8 legacy LTI-1.1 accounts carry an 8-digit idnumber). So the tool currently receives `lis_person_sourcedid = ""` and cannot use it.
 - `lis_person_contact_email_primary` = `$USER->email` — mutable; **do not use as the key**.
 

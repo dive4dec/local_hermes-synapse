@@ -10,7 +10,7 @@ Moodle caches aggressively. After making database changes (raw SQL, direct INSER
 ## Quick purge (most common)
 
 ```bash
-cd /var/www/html/public && moosh -n cache-clear
+cd <webroot> && moosh -n cache-clear
 ```
 
 This clears Moodle's general caches and is usually sufficient for most changes.
@@ -23,7 +23,7 @@ Course structure is cached in the `coursemodinfo` cache. After changing sections
 
 ```php
 // Via moosh php-eval:
-cd /var/www/html/public && moosh -n php-eval "
+cd <webroot> && moosh -n php-eval "
 cache_helper::purge_by_event('changesincourse');
 cache::make('core', 'coursemodinfo')->purge();
 "
@@ -32,7 +32,7 @@ cache::make('core', 'coursemodinfo')->purge();
 Or use the Moodle API directly (preferred — handles cache automatically):
 
 ```php
-cd /var/www/html/public && moosh -n php-eval "
+cd <webroot> && moosh -n php-eval "
 require_once(\$CFG->dirroot . '/course/lib.php');
 set_section_visible(3, 1, 0);  // courseid, sectionnumber, visibility
 "
@@ -41,7 +41,7 @@ set_section_visible(3, 1, 0);  // courseid, sectionnumber, visibility
 ### Question bank changes (new questions, category changes)
 
 ```php
-cd /var/www/html/public && moosh -n php-eval "
+cd <webroot> && moosh -n php-eval "
 cache_helper::purge_by_event('changesincourse');
 "
 ```
@@ -49,7 +49,7 @@ cache_helper::purge_by_event('changesincourse');
 ### Static files (JS, CSS, theme changes)
 
 ```php
-cd /var/www/html/public && moosh -n php-eval "
+cd <webroot> && moosh -n php-eval "
 purge_all_caches();
 "
 ```
@@ -57,7 +57,7 @@ purge_all_caches();
 ## Full purge (nuclear option)
 
 ```php
-cd /var/www/html/public && moosh -n php-eval "
+cd <webroot> && moosh -n php-eval "
 cache_helper::purge_reset();
 purge_all_caches();
 "
@@ -83,13 +83,13 @@ cache_helper::purge_by_event('changesincourse');
 **After any raw SQL change to Moodle tables, always purge caches before telling the user it's done.** The user cannot verify the change otherwise.
 
 ```bash
-cd /var/www/html/public && moosh -n cache-clear
+cd <webroot> && moosh -n cache-clear
 ```
 
 Or if that doesn't work:
 
 ```bash
-cd /var/www/html/public && moosh -n php-eval "cache_helper::purge_reset(); purge_all_caches();"
+cd <webroot> && moosh -n php-eval "cache_helper::purge_reset(); purge_all_caches();"
 ```
 
 ## Pitfalls

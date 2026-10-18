@@ -10,7 +10,7 @@ User wants another Hermes (another course's pod, another profile, another deploy
 
 ## Steps
 1. **Locate the target.**
-   - Local profile on this machine? Check `ls /var/www/moodledata/.hermes/profiles/`. If it exists, the other agent's skills dir is `profiles/<name>/skills/` (cross-profile writes need explicit user direction; skill_manage has a cross_profile guard).
+   - Local profile on this machine? Check `ls <datadir>/.hermes/profiles/`. If it exists, the other agent's skills dir is `profiles/<name>/skills/` (cross-profile writes need explicit user direction; skill_manage has a cross_profile guard).
    - Separate pod/deployment (the common case on this site: one pod per course)? No direct file access — package and hand off (steps 3–5).
 2. **Generalize before shipping.** Audit the skill + its scripts for deployment-specific hard-codes and remove them:
    - Numeric ids (course id, quiz id, cmid, group ids) → variables at the top of scripts ("set to your course id") + a "look it up, don't guess" step in SKILL.md

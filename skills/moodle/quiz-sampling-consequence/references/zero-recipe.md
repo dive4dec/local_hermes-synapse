@@ -1,4 +1,4 @@
-# Zero-out recipe (verified 2026-10-07, cs1302a_26a, quiz 63/64)
+# Zero-out recipe (verified 2026-10-07, <coursecode>, quiz 63/64)
 
 Working script shape. Two modes: whole-attempt (loop all scored slots) and
 single-slot. Both end with the same sumgrades refresh + recompute.
@@ -7,10 +7,10 @@ single-slot. Both end with the same sumgrades refresh + recompute.
 ```php
 <?php
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php'); require_once('/var/www/html/public/lib/setup.php');
+require('<webroot>/config.php'); require_once('<webroot>/lib/setup.php');
 global $DB;
-require_once('/var/www/html/public/mod/quiz/locallib.php');
-require_once('/var/www/html/public/mod/quiz/classes/quiz_attempt.php');
+require_once('<webroot>/mod/quiz/locallib.php');
+require_once('<webroot>/mod/quiz/classes/quiz_attempt.php');
 
 $QUIZID = 63; $grader = 494; // <Instructor-Name>
 $comment = 'Mark set to 0: student was not present when sampled to explain the E-Quiz 4 submission. See course email dated 2026-10-07.';
@@ -71,10 +71,10 @@ Same, but:
 
 ## After the batch
 ```php
-require_once('/var/www/html/public/lib/gradelib.php');
+require_once('<webroot>/lib/gradelib.php');
 grade_regrade_final_grades($courseid);
 ```
-then in the shell: `cd /var/www/html/public && moosh -n cache-clear`.
+then in the shell: `cd <webroot> && moosh -n cache-clear`.
 
 ## Verification (independent MCP read, never the same PHP process)
 ```sql
@@ -98,5 +98,5 @@ Expected: `mangrwrong` state, `-mark` = 0, comment text present. All four
 aggregate fields (sumgrades, quiz_grades, rawgrade, finalgrade) must agree.
 
 ## Run
-`cd /var/www/moodledata/.hermes && php /tmp/<script>.php 2>&1 | grep -v REQUEST_URI`
+`cd <datadir>/.hermes && php /tmp/<script>.php 2>&1 | grep -v REQUEST_URI`
 (Run as www-data; the PHP bootstrap in config.php does the DB wiring.)

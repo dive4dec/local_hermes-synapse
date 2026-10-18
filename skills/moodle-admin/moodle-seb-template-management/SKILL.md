@@ -43,14 +43,14 @@ those quizzes silently lose the SEB-quit button, even though the reference quiz 
 **Always present both options to the user** ("template only" vs "template + match the
 reference quiz's quit setting") and get the pick before writing.
 
-## Bulk standardization recipe (verified 2026-09-14, course 3)
+## Bulk standardization recipe (verified 2026-09-14, course <cid>)
 
 ```php
 <?php
 define('CLI_SCRIPT', TRUE);
 define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require('<webroot>/config.php');
+require_once('<webroot>/lib/setup.php');
 global $DB;
 
 $quizids = [...];        // from: requiresafeexambrowser = 2 rows for the course
@@ -80,7 +80,7 @@ foreach ($quizids as $qid) {
 }
 ```
 
-Also run `cd /var/www/html/public && moosh -n cache-clear` per site standard.
+Also run `cd <webroot> && moosh -n cache-clear` per site standard.
 **No daemon/server restart needed** — config + key regenerate lazily per request;
 students pick up the new config key on their next SEB launch.
 

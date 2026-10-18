@@ -2,7 +2,7 @@
 
 How the course total is actually computed when the grade category uses **Natural**
 (aggregation constant **13** = `GRADE_AGGREGATE_SUM` on this site — see
-`/var/www/html/public/lib/grade/constants.php`). Read `lib/grade/grade_category.php`
+`<webroot>/lib/grade/constants.php`). Read `lib/grade/grade_category.php`
 (`aggregate_values_and_adjust_bounds`, case `GRADE_AGGREGATE_SUM`) if you need to be
 precise. This matters because the "Weight" column in the UI does NOT map 1:1 to how the
 total is built.
@@ -59,7 +59,7 @@ Course 3's only enrolled "students" are LTI test users (e.g. Adam/Bob LTITEST,
 userids ~496/497). Use one to prove the formula:
 
 1. **Back up** all of the test user's course rows first:
-   `SELECT gg.* FROM mdl_grade_grades gg JOIN mdl_grade_items gi ON gi.id=gg.itemid WHERE gi.courseid=3 AND gg.userid=:u` → save to a JSON file (all 23 `mdl_grade_grades` columns).
+   `SELECT gg.* FROM mdl_grade_grades gg JOIN mdl_grade_items gi ON gi.id=gg.itemid WHERE gi.courseid = <cid> AND gg.userid=:u` → save to a JSON file (all 23 `mdl_grade_grades` columns).
 2. Write known finals to a few items (Exam 80/100, etc.), run `regrade_final_grades($uid)`, read back the course item (`itemid=39`) `rawgrade/finalgrade/rawgrademax`, and read each item's stored `aggregationweight` to see the effective weights.
 3. **Restore verbatim**: delete the user's course-3 rows and re-INSERT the exact backup rows, then recalc once.
 4. Confirm the course item matches the pre-test state.

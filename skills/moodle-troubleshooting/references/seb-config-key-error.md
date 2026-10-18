@@ -2,7 +2,7 @@
 
 ## Session example (2026-08-13)
 
-Adam LTITEST (user id=496) tried to access "Quiz for testing SEB" (quiz id=55) in cs1302a_26a via Safe Exam Browser. Access was repeatedly denied.
+Adam LTITEST (user id=496) tried to access "Quiz for testing SEB" (quiz id=55) in <coursecode> via Safe Exam Browser. Access was repeatedly denied.
 
 ### Log entries
 

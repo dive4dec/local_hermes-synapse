@@ -1,12 +1,12 @@
 # Audit a Moodle course for internally inconsistent content
 
 A read-only "sanity pass" over one course (e.g. "check if there's any inconsistent
-content in cs1302a_26a"). Cross-check things that *should* agree but drift apart after
+content in <coursecode>"). Cross-check things that *should* agree but drift apart after
 clones, copy-pastes, and semester rollovers. Read-only: gather evidence, then present a
 prioritized change list and wait for the user's per-item go/no-go (the user's standing
 rule: list exact changes, confirm, THEN apply).
 
-## Checklist (what actually paid off on course 3, 2026-08-27)
+## Checklist (what actually paid off on course <cid>, 2026-08-27)
 
 1. **Announcement post vs activity reality.** Pull the "Announcements" (`type='news'`)
    forum's pinned/first post and compare every claim to the live activity:

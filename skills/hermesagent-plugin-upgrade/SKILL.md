@@ -27,13 +27,13 @@ Use `moosh` — it uses Moodle's real PHP API, handles permissions, DB upgrades,
 
 3. **Restart gateway/bridge daemons** if the release includes backend changes:
    ```
-   /var/www/html/public/local/hermesagent/hermes-gateway-control.sh restart
-   /var/www/html/public/local/hermesagent/hermes-bridge-control.sh restart
+   <webroot>/local/hermesagent/hermes-gateway-control.sh restart
+   <webroot>/local/hermesagent/hermes-bridge-control.sh restart
    ```
 
 4. **Verify config survived** — `~/.hermes/` is outside the plugin directory and should be untouched:
    ```
-   ls /var/www/moodledata/.hermes/config.yaml
+   ls <datadir>/.hermes/config.yaml
    ```
 ## Pitfalls
 - **Never manually extract and copy files** — this bypasses Moodle's permission handling and DB upgrade, leading to 404s on static assets and stale plugin versions. Always use `moosh install_plugin`.

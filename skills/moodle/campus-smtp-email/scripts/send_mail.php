@@ -1,6 +1,10 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 // campus-smtp-email batch sender.
-// Usage:  php /var/www/moodledata/.hermes/skills/moodle/campus-smtp-email/scripts/send_mail.php \
+// Usage:  php <datadir>/.hermes/skills/moodle/campus-smtp-email/scripts/send_mail.php \
 //             --from <staff-email> --from-name "<Instructor-Name>" \
 //             --subject "..." --body-file /tmp/body.txt \
 //             (--to a@x.com[,b@y.com,...] | --roster "SELECT u.id,u.firstname,u.lastname,u.email FROM ... WHERE ...")
@@ -31,7 +35,7 @@ function smtp_send($to, $toName, $subject, $body, $from, $fromName) {
     $okf = function ($r, $p) { return strpos($r, $p) === 0; };
 
     $rd($c);
-    if (!$okf($cmd($c, 'EHLO cs1302a.cityu.local'), '250')) { fclose($c); return ['ok' => false, 'resp' => 'EHLO fail', 'qid' => '-']; }
+    if (!$okf($cmd($c, 'EHLO <coursecode>.cityu.local'), '250')) { fclose($c); return ['ok' => false, 'resp' => 'EHLO fail', 'qid' => '-']; }
     if (!$okf($cmd($c, "MAIL FROM:<$from>"), '250')) { fclose($c); return ['ok' => false, 'resp' => 'MAIL fail', 'qid' => '-']; }
     if (!$okf($cmd($c, "RCPT TO:<$to>"), '250')) { fclose($c); return ['ok' => false, 'resp' => 'RCPT fail', 'qid' => '-']; }
     if (!$okf($cmd($c, 'DATA'), '354')) { fclose($c); return ['ok' => false, 'resp' => 'DATA fail', 'qid' => '-']; }
@@ -40,7 +44,7 @@ function smtp_send($to, $toName, $subject, $body, $from, $fromName) {
         "From: $fromName <$from>",
         "To: $toName <$to>",
         'Subject: =?UTF-8?B?' . base64_encode($subject) . '?=',
-        'Message-ID: <' . uniqid('hermes', true) . '@cs1302a.<domain>>',
+        'Message-ID: <' . uniqid('hermes', true) . '@<coursecode>.<domain>>',
         'Date: ' . date('r'),
         'MIME-Version: 1.0',
         'Content-Type: text/plain; charset=UTF-8',
@@ -60,11 +64,11 @@ function smtp_send($to, $toName, $subject, $body, $from, $fromName) {
 global $DB;
 define('CLI_SCRIPT', true);
 define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php');
+require_once($WEBROOT.'/lib/setup.php');
 
 $from = argv_get('from', '<staff-email>');
-$fromName = argv_get('from-name', 'CS1302A Teaching Team');
+$fromName = argv_get('from-name', '<coursecode> Teaching Team');
 $subject = argv_get('subject');
 $body = argv_get('body');
 $bodyFile = argv_get('body-file');

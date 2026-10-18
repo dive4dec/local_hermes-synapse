@@ -5,7 +5,7 @@ description: "Inspect quiz attempts on <moodle-host> (Moodle 5.x): count attempt
 
 # Moodle Quiz Attempt Inspection
 
-Inspect who attempted a quiz, who is currently in progress, how far they've gotten, and where they're connecting from. All queries verified 2026-09-14 against CE-Quiz 1 (quiz id 58, cs1302a_26a).
+Inspect who attempted a quiz, who is currently in progress, how far they've gotten, and where they're connecting from. All queries verified 2026-09-14 against CE-Quiz 1 (quiz id 58, <coursecode>).
 
 ## Triggers
 
@@ -24,7 +24,7 @@ Inspect who attempted a quiz, who is currently in progress, how far they've gott
 - Group membership: `mdl_groups_members` (a user can be in multiple groups — one group per row; lab students are in exactly one).
 - Session/IP: `mdl_sessions` (`userid`, `firstip`, `lastip`, `timemodified`). No row = not currently logged in.
 - Log store: `mdl_logstore_standard_log` — quiz events have `component='mod_quiz'` (no `modulename` column), `objectid` = quiz id, `courseid` = course id, plus `ip`. Event names: `attempt_started`, `attempt_viewed`, `attempt_updated`, `attempt_autosaved`, `attempt_submitted`, `attempt_graded`, `attempt_reviewed`, `attempt_deleted`, `attempt_preview_started`.
-- Teachers (editing/non-editing) are **not bound by quiz timelimit** — an in-progress teacher attempt sitting open for hours/days is normal, not a red flag. Helpers (group 89) and test accounts (e.g. "Adam LTITEST" uid 502) are also legitimate.
+- Teachers (editing/non-editing) are **not bound by quiz timelimit** — an in-progress teacher attempt sitting open for hours/days is normal, not a red flag. Helpers (group <helpergid>) and test accounts (e.g. "Adam LTITEST" uid 502) are also legitimate.
 
 ## Query templates (moodle_db MCP, param name `query`, limit 100 rows)
 
@@ -96,7 +96,7 @@ FROM mdl_sessions s JOIN mdl_user u ON u.id = s.userid
 WHERE s.userid = <userid>
 ```
 
-Campus/lab IPs for CS1302: `175.159.202.0/24` (on-site lab, not VPN).
+Campus/lab IPs for <course>: `<lab-cidr>` (on-site lab, not VPN).
 
 ### 6. Per-question difficulty (who struggled on each question)
 
@@ -152,7 +152,7 @@ Interpretation rules:
 - **`rawfraction < 1` with `actualmark == maxpossmark`** on a later submit means the student eventually solved it; the earlier submits show exactly what broke (read `_testoutcome` `got`/traceback).
 - **Final `fraction` = 0.9 with all tests `awarded 1.0` and `_rawfraction 1`** = adaptive-behaviour deduction for having consumed earlier tries (100% on attempt 2 of a 2-try budget), NOT a mark deducted from the final code.
 - **Final state `gradedpartial` with `fraction 1.0`** = highest raw fraction across submits was a partial; state label is the last submit's, fraction is the best. Harmless for grading.
-- To see what the hidden tests actually require, read the question stem (`mdl_question.questiontext`) — the stem may require specific variable names that only the hidden tests enforce (see CS1302 `print - concat to get url`, qid 3562: hidden tests run `assert domain == "..."`, so the input MUST be stored in a variable literally named `domain`; the visible example test only checks stdout).
+- To see what the hidden tests actually require, read the question stem (`mdl_question.questiontext`) — the stem may require specific variable names that only the hidden tests enforce (see <course> `print - concat to get url`, qid 3562: hidden tests run `assert domain == "..."`, so the input MUST be stored in a variable literally named `domain`; the visible example test only checks stdout).
 
 ### 8. Log-store IP/history — PHP bootstrap only
 
@@ -167,7 +167,7 @@ date_default_timezone_set('Asia/Hong_Kong');
 $rows = $DB->get_records_sql("
     SELECT eventname, userid, ip, timecreated
     FROM {logstore_standard_log}
-    WHERE courseid = 3 AND component = 'mod_quiz' AND objectid = 58
+    WHERE courseid = <cid> AND component = 'mod_quiz' AND objectid = 58
       AND eventname IN ('\\mod_quiz\\event\\attempt_started', '\\mod_quiz\\event\\attempt_submitted', '\\mod_quiz\\event\\attempt_viewed')
     ORDER BY timecreated DESC LIMIT 100");
 foreach ($rows as $r) { echo date('m-d H:i:s', $r->timecreated), ' ', $r->eventname, ' uid=', $r->userid, ' ip=', $r->ip, PHP_EOL; }
@@ -184,7 +184,7 @@ foreach ($rows as $r) { echo date('m-d H:i:s', $r->timecreated), ' ', $r->eventn
 - MCP returns at most 100 rows — for "all attempts of a large quiz" add `GROUP BY` aggregates or filter by state/time.
 - `state` comparisons must use the string values (`'inprogress'`), not 0/1/2 — although numeric casts happen to match, string form is correct.
 
-## Reference (cs1302a_26a, course id=3)
+## Reference (<coursecode>, course id=3)
 
 - CE-Quiz 1 = quiz 58: 5 questions, `timelimit=2700`, `attempts=1`. Group sizes: T03=65, T01=59, T02=69, TA1=10, helpers=22.
 - <student-A> (uid 726, LTI) is a non-editing teacher — her attempts are legitimate.

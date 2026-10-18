@@ -101,7 +101,7 @@ $courses = $DB->get_records('course');
 
 ### Find a course by shortname
 ```php
-$course = $DB->get_record('course', ['shortname' => 'cs1302a_26a']);
+$course = $DB->get_record('course', ['shortname' => '<coursecode>']);
 ```
 
 ### List enrolled students in a course
@@ -141,4 +141,4 @@ $posts = $DB->get_records('forum_posts', ['discussion' => $discId]);
 - **Empty quiz slots ≠ empty quiz:** A quiz can have 0 question_references yet still have valid student attempts.
 - **Quiz group mode lives in `course_modules`, not `quiz`:** The `groupmode` and `groupingid` fields are on the `course_modules` record, not the `quiz` table. The quiz edit form reads from `$this->_cm` (the CM record). Setting them on the `quiz` table has no effect. Use `$DB->set_field('course_modules', 'groupmode', 1, ['id' => $cmid])` to change group mode.
 - **`grouping_groups` table is actually `groupings_groups`:** The join table between groupings and groups is `groupings_groups` (plural on both sides), not `grouping_groups`. Using the wrong name causes "Table does not exist".
-- **ALWAYS run `moosh -n cache-clear` after any DB change:** After inserting/deleting/updating records (groups, overrides, course_modules, etc.), always run `cd /var/www/html/public && moosh -n cache-clear` so changes appear in the UI. The user gets very frustrated having to remind you.
+- **ALWAYS run `moosh -n cache-clear` after any DB change:** After inserting/deleting/updating records (groups, overrides, course_modules, etc.), always run `cd <webroot> && moosh -n cache-clear` so changes appear in the UI. The user gets very frustrated having to remind you.

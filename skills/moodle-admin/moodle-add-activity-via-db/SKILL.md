@@ -33,7 +33,7 @@ ACTIVITY_add_instance($modform, $cm);
 3. Insert activity table record
 4. Link CM to instance: `$DB->set_field('course_modules', 'instance', $activityid, ['id' => $cmid])`
 5. Create context: `context_module::instance($cmid, true)`
-6. **Purge file cache**: `rm -rf /var/www/moodledata/cache/local_file/core_coursemodinfo/{courseid}-c-cache/`
+6. **Purge file cache**: `rm -rf <datadir>/cache/local_file/core_coursemodinfo/{courseid}-c-cache/`
 7. Run `moosh -n cache-clear`
 
 ## Forum-specific fields
@@ -52,13 +52,13 @@ $forum->autosubscribe = 0;
 - Always purge `core_coursemodinfo` cache after any direct DB changes to course modules
 - Forum type values: `general`, `single`, `qanda` (NOT `qa`)
 - Forum instance IDs can collide with pre-existing entries after course clones
-- **`course_modules.section`** must be the `course_sections.id` (not the section number). For example, section number 1 in course 7 has `id=89`, so use `89`.
+- **`course_modules.section`** must be the `course_sections.id` (not the section number). For example, section number 1 in course <other-coursecid> has `id=<helpergid>`, so use `89`.
 - **`course_sections.sequence`** must include the new CM id, or the activity won't render. Append it: `$DB->set_field('course_sections', 'sequence', $old_sequence . ',' . $cmid, ['id' => $section_id])`.
 - **Lesson learned**: If API calls fail, use the Moodle UI to create the activity. It handles all caching, contexts, and sequences correctly.
 
 ## Copying forum discussions/posts between forums
 
-Verified working on this site 2026-08-23 (FAQ post copied cs1302a_26a forum 11 → cs1302_26a forum 12, new discussion 22). Use a PHP bootstrap script (MCP query tool is read-only).
+Verified working on this site 2026-08-23 (FAQ post copied <coursecode> forum 11 → <other-coursecode> forum 12, new discussion 22). Use a PHP bootstrap script (MCP query tool is read-only).
 
 1. Read the source discussion + its non-deleted posts (`deleted = 0`). For a FAQ-style discussion expect exactly 1 root post; its id must equal the discussion's `firstpost`.
 2. Insert into `forum_discussions`: `course` = target course id, `forum` = target forum id, `name` = title (NOT `subject` — column doesn't exist), `firstpost` = 0 initially, `userid`/`usermodified` = author, `groupid` copied from source (usually -1), `assessed` = 1, `timemodified` = `time()`, `pinned` = 0, `timelocked` = 0, `timestart`/`timeend` = 0.

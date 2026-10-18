@@ -14,13 +14,13 @@ Trigger when the user asks to clone, copy, or duplicate a Moodle course without 
 ### Step 1: Find the source course ID
 
 ```bash
-moosh -p /var/www/html/public -n sql-run "SELECT id, shortname, fullname FROM mdl_course WHERE shortname = 'SOURCE_SHORTNAME'"
+moosh -p <webroot> -n sql-run "SELECT id, shortname, fullname FROM mdl_course WHERE shortname = 'SOURCE_SHORTNAME'"
 ```
 
 ### Step 2: Template backup (excludes users, grades, user content)
 
 ```bash
-moosh -p /var/www/html/public -n course-backup SOURCE_ID --template -f /tmp/COURSE_TEMPLATE.mbz
+moosh -p <webroot> -n course-backup SOURCE_ID --template -f /tmp/COURSE_TEMPLATE.mbz
 ```
 
 The `--template` flag excludes:
@@ -32,26 +32,26 @@ The `--template` flag excludes:
 ### Step 3: Create the new course shell
 
 ```bash
-moosh -p /var/www/html/public -n course-create --fullname="New Course Full Name" --shortname="NEW_SHORTNAME" --category=CATEGORY_ID
+moosh -p <webroot> -n course-create --fullname="New Course Full Name" --shortname="NEW_SHORTNAME" --category=CATEGORY_ID
 ```
 
 ### Step 4: Restore into the new course
 
 ```bash
-moosh -p /var/www/html/public -n course-restore /tmp/COURSE_TEMPLATE.mbz TARGET_CATEGORY_ID
+moosh -p <webroot> -n course-restore /tmp/COURSE_TEMPLATE.mbz TARGET_CATEGORY_ID
 ```
 
 ### Step 5: Rename if needed
 
 If the restored course has a different shortname than desired:
 ```bash
-moosh -p /var/www/html/public -n course-mod --id=NEW_COURSE_ID --shortname=NEW_SHORTNAME --fullname="New Name"
+moosh -p <webroot> -n course-mod --id=NEW_COURSE_ID --shortname=NEW_SHORTNAME --fullname="New Name"
 ```
 
 ### Step 6: Clear cache
 
 ```bash
-moosh -p /var/www/html/public -n cache-clear
+moosh -p <webroot> -n cache-clear
 ```
 
 ## Post-Restore Checklist
@@ -70,7 +70,7 @@ After a successful restore, verify:
 
 2. **`--template` is the key flag.** Without it, user data may be included. With it, enrolments, grades, and user content are excluded.
 
-3. **Moosh needs `--moodle-path` (`-p`)** — the Moodle installation root (e.g., `/var/www/html/public`).
+3. **Moosh needs `--moodle-path` (`-p`)** — the Moodle installation root (e.g., `<webroot>`).
 
 4. **Moosh needs `--no-user-check` (`-n`)** — skips ownership verification, which fails in containerized environments.
 

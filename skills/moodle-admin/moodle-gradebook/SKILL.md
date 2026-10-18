@@ -19,7 +19,7 @@ description: "Moodle gradebook work on <moodle-host> (Moodle 5.x): inspect grade
 
 `mdl_grade_items` — one row per gradeable column:
 - `itemtype`: `course` | `mod` | `manual` | `category` (plus outcome/import/calculated)
-- Course item: query `['courseid' => $cid, 'itemtype' => 'course']` — its `iteminstance` is **NOT the course id** (observed: course 3's course item has `iteminstance=2`)
+- Course item: query `['courseid' => $cid, 'itemtype' => 'course']` — its `iteminstance` is **NOT the course id** (observed: course <cid>'s course item has `iteminstance=2`)
 - **Weight is `aggregationcoef2`** as a fraction (0.05 = 5%). There is **no `weight` column**. `aggregationcoef` is used by other aggregation types.
 - `gradetype`: 1 = value. `grademax` / `grademin`.
 - `hidden`: 0 = visible, 1 = hidden, >1 = timestamp — item **visible after** that time (hide-until). Verified 2026-08-27: E/CE-Quiz items carry their quiz CLOSE timestamps (e.g. Demo CE-Quiz hidden=1789315199 = 2026-09-13 23:59 → hidden until the quiz closed; all now visible). Test with `(int)$hidden > 0`.
@@ -33,7 +33,7 @@ description: "Moodle gradebook work on <moodle-host> (Moodle 5.x): inspect grade
 
 ## Inspecting a course gradebook (CLI PHP bootstrap, see `moodle-db-access`)
 
-1. Course item: `$DB->get_record('grade_items', ['courseid' => $cid, 'itemtype' => 'course'])` — `grademax` hints at the display scale (100 = percentage, 1025 = raw Natural/SUM total; confirm with the user). A **Natural/SUM** course item's `grademax` is the SUM of its counted children's grademaxes (course 3 = 100+20+5+9×80+9×20 = **1025**), so the total is shown as raw points unless the item's `display` column is set to a percentage type.
+1. Course item: `$DB->get_record('grade_items', ['courseid' => $cid, 'itemtype' => 'course'])` — `grademax` hints at the display scale (100 = percentage, 1025 = raw Natural/SUM total; confirm with the user). A **Natural/SUM** course item's `grademax` is the SUM of its counted children's grademaxes (course <cid> = 100+20+5+9×80+9×20 = **1025**), so the total is shown as raw points unless the item's `display` column is set to a percentage type.
 2. Items: `get_records('grade_items', ['courseid' => $cid, 'itemtype' => 'mod'], 'sortorder')` plus `'itemtype' => 'manual'`.
 3. Sum `aggregationcoef2` over visible items; the sum must equal 1.0 (or the intended drift if retake items carry weights — investigate before recommending). Course-3 verified state 2026-08-27: Exam 0.5, Midterm 0.2, 9×E-Quiz 0.02222 (=0.2), 9×CE-Quiz 0.00556 (=0.05), Project 0.05 → **sums to exactly 1.0**; see `references/course-3-gradebook.md`.
 4. Sample a graded student: pull `grade_grades` for those itemids, sum `finalgrade`, compare with the course-item row.
@@ -79,7 +79,7 @@ SELECT id, name, course, grade FROM mdl_quiz WHERE id = <quizid>;
 SELECT COUNT(*) FROM mdl_quiz_attempts WHERE quiz = <quizid>;
 ```
 
-**Root cause found in the wild (2026-08-27, Mock Exam 25B in cs1302a_26a, quiz 76):** a quiz
+**Root cause found in the wild (2026-08-27, Mock Exam 25B in <coursecode>, quiz 76):** a quiz
 created/saved with **max grade 0** syncs its grade item to `gradetype = 0` (`GRADE_TYPE_NONE`);
 the item keeps a stale `grademax` (e.g. 100) and may carry leftover `aggregationcoef2` /
 `hidden` from a prior config. Every normal quiz item is `gradetype = 1`.
@@ -128,7 +128,7 @@ tables** — all must be set, and the pass *mark* is NOT stored on the activity:
 
 The quiz page shows "Grade to pass: X out of Y" to students whenever `gradepass != 0`
 (`mod/quiz/view.php`). Bulk recipe, real-engine verification script, pitfalls, and the
-2026-08-28 worked example (13 Mock quizzes in cs1302a_26a):
+2026-08-28 worked example (13 Mock quizzes in <coursecode>):
 `references/quiz-completion-passgrade.md`.
 
 ## Grading per group (one score per group)
@@ -173,9 +173,9 @@ Key facts (verified 2026-09-22, E-Quiz 2 zeroing for one student):
 API path (works in CLI; all verified live this session):
 ```php
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php'); require_once('/var/www/html/public/lib/setup.php');
-require_once('/var/www/html/public/mod/quiz/locallib.php');
-require_once('/var/www/html/public/mod/quiz/classes/quiz_attempt.php');
+require('<webroot>/config.php'); require_once('<webroot>/lib/setup.php');
+require_once('<webroot>/mod/quiz/locallib.php');
+require_once('<webroot>/mod/quiz/classes/quiz_attempt.php');
 $attemptobj = \mod_quiz\quiz_attempt::create($attemptid);   // attempt ID, not userid
 $ref = new ReflectionObject($attemptobj);
 $p = $ref->getProperty('quba'); $p->setAccessible(true);
@@ -199,7 +199,7 @@ This yields `sumgrades=0`, `quiz_grades.grade=0`, `grade_grades.rawgrade=0` AND
 question in the attempt review/grading report. Also fire
 `\mod_quiz\event\question_manually_graded::create([...])->trigger()` per slot
 (the popup fires it; harmless to skip but keep the audit trail).
-Finish (verified 2026-10-06/07): `require_once('/var/www/html/public/lib/gradelib.php');
+Finish (verified 2026-10-06/07): `require_once('<webroot>/lib/gradelib.php');
 grade_regrade_final_grades($courseid);` (undefined-function error without the require)
 to refresh course totals, then `moosh -n cache-clear`, and re-verify all four fields
 (sumgrades / quiz_grades.grade / rawgrade / finalgrade) through the moodle_db MCP —

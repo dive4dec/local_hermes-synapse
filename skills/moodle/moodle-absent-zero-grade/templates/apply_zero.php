@@ -1,4 +1,14 @@
+/usr/bin/bash: _parse_usage: line 16: syntax error near unexpected token `('
+/usr/bin/bash: _parse_usage: line 16: ` -?(\[)+([a-zA-Z0-9?]))'
+/usr/bin/bash: error importing function definition for `_parse_usage'
+/usr/bin/bash: _longopt: line 6: syntax error near unexpected token `('
+/usr/bin/bash: _longopt: line 6: ` --!(no-*)dir*)'
+/usr/bin/bash: error importing function definition for `_longopt'
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 // Zero-grade absent students for one quiz.
 // Usage: php apply_zero.php [--commit]
 //   Without --commit: dry run (all transactions rolled back).
@@ -6,12 +16,12 @@
 // pair against mdl_quiz_attempts FIRST (read-only).
 // Backup: /tmp/<quizid>_absent_backup.json (pre-attempt rows, for reversal).
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php'); require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php'); require_once($WEBROOT.'/lib/setup.php');
 global $DB;
 
 $COMMIT = in_array('--commit', $argv, true);
 $quizid    = 59;   // E-Quiz 2 (EDIT)
-$courseid  = 3;    // cs1302a_26a (EDIT)
+$courseid  = getenv('MHS_COURSE_ID') ? (int)getenv('MHS_COURSE_ID') : 0; // <cid> — set MHS_COURSE_ID (run mhs-setup) or edit this
 $gradeItem = 61;   // grade_items.id for this quiz:
                    //   get_record('grade_items',['itemmodule'=>'quiz','iteminstance'=>$quizid,'courseid'=>$courseid])->id
 $byuser    = 494;  // grading teacher (VERIFY bound account first!)
@@ -22,10 +32,10 @@ $STUDENTS = [
   16011 => 629,
 ];
 
-require_once('/var/www/html/public/mod/quiz/locallib.php');
-require_once('/var/www/html/public/mod/quiz/classes/quiz_attempt.php');
-require_once('/var/www/html/public/question/engine/lib.php');
-require_once('/var/www/html/public/question/engine/datalib.php');
+require_once($WEBROOT.'/mod/quiz/locallib.php');
+require_once($WEBROOT.'/mod/quiz/classes/quiz_attempt.php');
+require_once($WEBROOT.'/question/engine/lib.php');
+require_once($WEBROOT.'/question/engine/datalib.php');
 
 function dieerr($m){ fwrite(STDERR,"ERROR: $m\n"); exit(2); }
 // CORRECT manual-step count (attemptstepid -> question_attempt_steps.id)
@@ -117,4 +127,4 @@ foreach ($STUDENTS as $attemptid => $userid) {
 file_put_contents('/tmp/'.basename(__FILE__, '.php').'_backup.json', json_encode($backup));
 if (!$COMMIT) { echo "\nDRY RUN complete. Backup: /tmp/".basename(__FILE__, '.php')."_backup.json\n"; exit(0); }
 purge_caches();
-echo "\nALL COMMITTED. (Run: cd /var/www/html/public && moosh -n cache-clear)\n";
+echo "\nALL COMMITTED. (Run: cd <webroot> && moosh -n cache-clear)\n";

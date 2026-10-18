@@ -51,7 +51,7 @@ Bulk updates to Moodle course activities, labels, and settings.
 | ○ sub-option: "Receiving a passing grade" | `completionpassgrade = 1` (0 = any grade) |
 | The pass mark itself | `grade_items.gradepass` of the activity's grade item (e.g. 30/100, 6/20) |
 
-Quiz-specific: quiz custom rules (exhaust-attempts, min-attempts) live on the `mdl_quiz` table (`completionattemptsexhausted`, `completionminattempts`) and only activate when `completionattemptsexhausted=1`. Full mechanics, the Mock exam/midterm audit snapshot (all 3 CS1302 courses), duplicates/legacy anomalies, and the apply+verify workflow: **`references/activity-completion-mechanics.md`**
+Quiz-specific: quiz custom rules (exhaust-attempts, min-attempts) live on the `mdl_quiz` table (`completionattemptsexhausted`, `completionminattempts`) and only activate when `completionattemptsexhausted=1`. Full mechanics, the Mock exam/midterm audit snapshot (all 3 <course> courses), duplicates/legacy anomalies, and the apply+verify workflow: **`references/activity-completion-mechanics.md`**
 
 ### Hidden access restrictions
 
@@ -75,7 +75,7 @@ Clear with: `$DB->set_field('course_modules', 'availability', null, ['id' => $cm
 3. Show the user current → new names as a labeled list / bullet list — **never a Markdown table** (the user is on Matrix, where tables do not render)
 4. Wait for confirmation
 5. Apply with `$DB->set_field()` in a loop
-6. Re-scan to prove 0 leftovers, then purge cache: `cd /var/www/html/public && moosh -n cache-clear`
+6. Re-scan to prove 0 leftovers, then purge cache: `cd <webroot> && moosh -n cache-clear`
 
 ## Workflow for updating contact labels
 
@@ -109,15 +109,15 @@ When asked to turn a filter on/off for specific activities (e.g. "turn off 'Conv
 4. **Apply with the standard function**, not hand-inserted rows (identical to the UI's activity Preferences → Text filters toggle):
 
    ```php
-   require_once('/var/www/html/public/lib/filterlib.php');
+   require_once('<webroot>/lib/filterlib.php');
    filter_set_local_state('urltolink', $contextid, TEXTFILTER_OFF);   // or TEXTFILTER_ON
    // filter_set_local_state(..., TEXTFILTER_INHERIT) deletes the override row
    ```
-5. `cd /var/www/html/public && moosh -n cache-clear`
+5. `cd <webroot> && moosh -n cache-clear`
 6. **Verify WITH A CONTROL** — render a test string containing a raw URL (plus an activity name, if autolinks matter) via `format_text()` (requires a logged-in user + context — see the pitfall below). Check:
    - in each **modified** activity's module context → URL renders as plain text; activity autolinks (if only urltolink was disabled) still present
    - in one **unmodified** activity's context AND the course context → URL still linked
-   The control proves the override is scoped to the target activities and nothing site-wide changed. (Verified 2026-09-02 on the 10 cs1302a_26a CE-Quizzes.)
+   The control proves the override is scoped to the target activities and nothing site-wide changed. (Verified 2026-09-02 on the 10 <coursecode> CE-Quizzes.)
    - **Regex trap when detecting urltolink in rendered output (bitten 2026-09-05):** do NOT match on `href="https://dive..."` to find URL-links — on this site the `activitynames` autolinks (SEB → `.../mod/page/view.php?id=191`, Midterm → `.../mod/quiz/view.php?id=130`) share the same host, so that regex matches autolinks and produced a 100% false "STILL LINKED" sweep (all 27 newly-off quizzes AND the already-off control flagged bad while the DB state was correct). Distinguish by link shape: urltolink wraps the URL itself → `<a href="URL" class="_blanktarget">URL</a>`; activitynames wraps the activity name → `<a class="autolink" title="NAME" href="...">NAME</a>`. Test for `class="_blanktarget"` (urltolink present) and separately for `class="autolink"` (autolinks survived).
 
 ## Workflow for inserting a new course section (topic)
@@ -127,7 +127,7 @@ Inserting a section mid-list requires shifting, because `section` numbers must b
 1. Insert a `course_sections` row with `section=99` (temp placeholder), `sequence=0`, `visible=1`, `visibleoncoursepage=1`, `required=0`
 2. Shift ALL existing sections with `section >= target` up by 1, iterating in **descending** order (highest first) to avoid unique-key collisions
 3. Set the new row's `section` to the target position (e.g., 2)
-4. Purge: `cm_info::purge_coursecache($courseid)` in the PHP script, then `cd /var/www/html/public && moosh -n cache-clear`
+4. Purge: `cm_info::purge_coursecache($courseid)` in the PHP script, then `cd <webroot> && moosh -n cache-clear`
 5. Verify with a `get_records('course_sections', ['course' => $id], 'section ASC')` listing
 
 Pitfalls:

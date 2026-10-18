@@ -11,8 +11,8 @@ filename hits (`OPTMentor_main_page.jpg`) are classified separately:
 
 ```php
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require('<webroot>/config.php');
+require_once('<webroot>/lib/setup.php');
 global $DB;
 function count_standalone($text) {
     if (!is_scalar($text)) return 0;
@@ -45,7 +45,7 @@ $DB->get_records_sql("SELECT id, filename FROM mdl_files WHERE filename LIKE :x"
 
 Present the classified list (count per location) and wait for explicit user
 confirmation. Note siblings: the same string usually exists in the other live
-courses too (cs1302_25b=2, cs1302a_26a=3, cs1302_26a=7) — run the sweep
+courses too (<course>_25b=2, <coursecode>=3, <other-coursecode>=7) — run the sweep
 sitewide and tell the user, but only change what was confirmed.
 
 ## Step 3 — Apply (PHP bootstrap, per field)
@@ -72,7 +72,7 @@ locations the sweep reported. Do NOT touch `mdl_files` rows or URL strings.
    old filename (intentionally unchanged):
    `preg_match_all('/@@PLUGINFILE@@\/(\S+\.jpg)/', $content, $m)`
 3. Optional render check: `format_text($content, FORMAT_MARKDOWN, ['context' => $ctx])`.
-4. `cd /var/www/html/public && moosh -n cache-clear`
+4. `cd <webroot> && moosh -n cache-clear`
 
 ## Gotchas found while doing this
 

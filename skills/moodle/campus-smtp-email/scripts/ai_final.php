@@ -1,24 +1,30 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+$CID      = getenv('MHS_COURSE_ID') ? (int)getenv('MHS_COURSE_ID') : 0;  // <cid>
+$QUIZ     = getenv('MHS_QUIZ_ID') ? (int)getenv('MHS_QUIZ_ID') : 58;    // worked-example quiz id
+
 define('CLI_SCRIPT', true);
 define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php');
+require_once($WEBROOT.'/lib/setup.php');
 global $DB;
 $Q = fn($sql, $p = []) => $DB->get_records_sql($sql, $p);
 function t($l,$fn){ try { return $fn(); } catch (Throwable $e){ echo "ERR $l: ".$e->getMessage()."\n"; exit(1);} }
 
-$attempts = t('at', fn() => $Q("SELECT id, userid, uniqueid, timestart, timefinish, sumgrades FROM {quiz_attempts} WHERE quiz = 58 AND preview = 0 AND timefinish > 0"));
+$attempts = t('at', fn() => $Q("SELECT id, userid, uniqueid, timestart, timefinish, sumgrades FROM {quiz_attempts} WHERE quiz = $QUIZ AND preview = 0 AND timefinish > 0"));
 $uins = implode(',', array_unique(array_map('intval', array_column($attempts, 'uniqueid'))));
 $uids = array_unique(array_map('intval', array_column($attempts, 'userid')));
 $in = implode(',', $uids);
 $users = t('u', fn() => $Q("SELECT id, firstname, lastname, email, auth FROM {user} WHERE id IN ($in)"));
 $groups = [];
-$g = t('g', fn() => $Q("SELECT gm.id, gm.userid, g2.name FROM {groups_members} gm JOIN {groups} g2 ON g2.id = gm.groupid WHERE g2.courseid = 3 AND gm.userid IN ($in)"));
+$g = t('g', fn() => $Q("SELECT gm.id, gm.userid, g2.name FROM {groups_members} gm JOIN {groups} g2 ON g2.id = gm.groupid WHERE g2.courseid = $CID AND gm.userid IN ($in)"));
 foreach ($g as $r) $groups[(int)$r->userid][] = $r->name;
 
 // IPs per user from logstore (last 3h of the session)
 $minstart = min(array_map('intval', array_column($attempts, 'timestart')));
-$ipdata = t('ip', fn() => $Q("SELECT id, userid, timecreated, ip FROM {logstore_standard_log} WHERE courseid = 3 AND userid IN ($in) AND timecreated >= ?", [$minstart]));
+$ipdata = t('ip', fn() => $Q("SELECT id, userid, timecreated, ip FROM {logstore_standard_log} WHERE courseid = $CID AND userid IN ($in) AND timecreated >= ?", [$minstart]));
 $ipByUser = [];
 foreach ($ipdata as $r) {
     $uid = (int)$r->userid;

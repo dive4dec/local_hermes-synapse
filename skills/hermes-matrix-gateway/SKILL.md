@@ -5,7 +5,7 @@ description: "Set up or troubleshoot the Matrix/Element gateway for Hermes Agent
 
 # Hermes Matrix Gateway Setup (this pod)
 
-Full procedural runbook: /var/www/moodledata/.hermes/matrix-gateway-runbook.md (proven end-to-end 2026-08-25). Read it first; this skill carries the environment-specific truths for this pod and verified deltas the runbook leaves implicit.
+Full procedural runbook: <datadir>/.hermes/matrix-gateway-runbook.md (proven end-to-end 2026-08-25). Read it first; this skill carries the environment-specific truths for this pod and verified deltas the runbook leaves implicit.
 
 ## Current-state check (do this first)
 - `grep -c '^MATRIX_' $HERMES_HOME/.env` — 0 = not configured yet.
@@ -15,7 +15,7 @@ Full procedural runbook: /var/www/moodledata/.hermes/matrix-gateway-runbook.md (
 ## Environment facts (they decide what is possible)
 - Pod is musl (Alpine, Kubernetes, www-data, non-root, no C toolchain). E2EE is impossible: python-olm ships glibc wheels only. Run plaintext; do NOT set MATRIX_ENCRYPTION / MATRIX_E2EE_MODE.
 - Matrix plugin is bundled: <venv>/lib/python3.12/site-packages/plugins/platforms/matrix/ — no separate install.
-- Gateway is managed by /var/www/html/public/local/hermesagent/hermes-gateway-control.sh (never run `hermes gateway run` in foreground — it blocks forever).
+- Gateway is managed by <webroot>/local/hermesagent/hermes-gateway-control.sh (never run `hermes gateway run` in foreground — it blocks forever).
 - Log: $HERMES_HOME/logs/gateway.log (does not exist until first start).
 
 ## Dependency pins (the part that breaks if wrong)

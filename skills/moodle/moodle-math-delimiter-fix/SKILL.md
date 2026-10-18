@@ -14,7 +14,7 @@ When a Code Runner question has broken inline math rendering, or the user asks t
 The simplest fix — no data changes needed. MathJax 3/4 (used by Moodle 5.x) doesn't enable `$` delimiters by default. Set `mathjaxconfig` in `filter_mathjaxloader`:
 
 ```bash
-moosh -p /var/www/html/public -n sql-run "UPDATE mdl_config_plugins SET value = '{\"tex\": {\"inlineMath\": [[\"$\", \"$\"], [\"\\\\\\\\(\", \"\\\\\\\\)\\\"]]}}' WHERE plugin = 'filter_mathjaxloader' AND name = 'mathjaxconfig'"
+moosh -p <webroot> -n sql-run "UPDATE mdl_config_plugins SET value = '{\"tex\": {\"inlineMath\": [[\"$\", \"$\"], [\"\\\\\\\\(\", \"\\\\\\\\)\\\"]]}}' WHERE plugin = 'filter_mathjaxloader' AND name = 'mathjaxconfig'"
 ```
 
 This stores the JSON:
@@ -24,7 +24,7 @@ This stores the JSON:
 
 Then clear cache:
 ```bash
-moosh -p /var/www/html/public -n cache-clear
+moosh -p <webroot> -n cache-clear
 ```
 
 Moodle's mathjaxloader parses this via `JSON.parse()` and sets it as `window.MathJax = config` before loading the library. Both `$...$` and `\(...\)` work.
@@ -60,10 +60,10 @@ When the database stores `\\(...\\)` (double backslash), Twig reduces it to `\(.
 ### Fix a single question
 
 ```bash
-cat > /var/www/moodledata/temp/fix_math.php << 'PHPEOF'
+cat > <datadir>/temp/fix_math.php << 'PHPEOF'
 <?php
 define('CLI_SCRIPT', true);
-require_once('/var/www/html/public/config.php');
+require_once('<webroot>/config.php');
 $questionid = (int)$argv[1];
 $q = $DB->get_record('question', ['id' => $questionid]);
 $text = $q->questiontext;
@@ -78,7 +78,7 @@ if ($new !== $text) {
     echo "No changes needed\n";
 }
 PHPEOF
-php /var/www/moodledata/temp/fix_math.php QUESTION_ID
+php <datadir>/temp/fix_math.php QUESTION_ID
 ```
 
 ## Discover questions with broken math delimiters

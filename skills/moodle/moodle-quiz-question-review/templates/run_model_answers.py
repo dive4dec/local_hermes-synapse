@@ -27,7 +27,7 @@ rendering produces false failures.
 """
 import json, subprocess, re, os, sys
 
-PY = '/var/www/moodledata/.hermes/venv/bin/python3'
+PY = $DATA_DIR.'/.hermes/venv/bin/python3'
 DATA = sys.argv[1] if len(sys.argv) > 1 else '/tmp/mock_midterms_data.json'
 OUT = sys.argv[2] if len(sys.argv) > 2 else '/tmp/mock_run_results.json'
 d = json.load(open(DATA))

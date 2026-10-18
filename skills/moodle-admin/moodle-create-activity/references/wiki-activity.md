@@ -1,6 +1,6 @@
 # Wiki (mod/wiki) — Group Modes, Comments, and Deadline Locking
 
-Verified in this environment (Moodle 5.2.x, `CFG->version=2026042001`) by reading `/var/www/html/public/mod/wiki/`. Re-verify line numbers before quoting, but the semantics are structural and stable.
+Verified in this environment (Moodle 5.2.x, `CFG->version=2026042001`) by reading `<webroot>/mod/wiki/`. Re-verify line numbers before quoting, but the semantics are structural and stable.
 
 ## Group-mode access semantics
 
@@ -26,7 +26,7 @@ Key consequences:
 
 ## Two-phase peer-review pattern (proven plan shape)
 
-Used for cs1302a_26a project wiki (100 groups, grouping id 25):
+Used for <coursecode> project wiki (100 groups, grouping id 25):
 
 1. **Phase A** (creation → review opens): CM `groupmode=1` (SEPARATEGROUPS) + `groupingid=<project grouping>`. Each group sees/edits only its own page.
 2. **Phase B** (review opens): flip the same `course_modules` row's `groupmode` from 1 → 2 (VISIBLEGROUPS). One-field update; subwikis/pages/comments unaffected. All students can now view all group pages and comment.

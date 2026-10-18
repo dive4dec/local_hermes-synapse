@@ -34,7 +34,7 @@ Per-user footprint to check before deleting: enrolments (`mdl_user_enrolments` �
 
 1. `SELECT id, deleted, username FROM mdl_user WHERE lastname = 'LTITEST'` — removed ones show `deleted=1` + anonymized usernames; unrelated same-named accounts keep their original `timemodified`.
 2. Roster check via the **same function the Participants page uses**: `get_enrolled_users(context_course::instance($cid), null, 0, 'u.id, u.firstname, u.lastname', [], 0, 0)` (the string-condition form `roleid>0` can return empty in CLI bootstrap — use `null` for a plain roster).
-3. Group/gradebook spot-checks + `cd /var/www/html/public && moosh -n cache-clear`.
+3. Group/gradebook spot-checks + `cd <webroot> && moosh -n cache-clear`.
 
 ### LTI auto-re-provisioning caveat
 
@@ -42,18 +42,18 @@ The LTI tool recreates deleted accounts on the next launch if it sends the same 
 
 ## Key Environment Facts
 
-- **Moodle webroot**: `/var/www/html/public` (NOT `/var/www/html`)
-- **Course site directories**: `/var/www/html/cs1302a-eq/` and similar subdirectories serve as Moodle webroots for course-specific sites. Requests through those URLs resolve files relative to the course directory, NOT `/public/`.
-- **Plugin symlink requirement**: When a plugin is installed in `/var/www/html/public/local/` but accessed via a course site URL (e.g., `/cs1302a-eq/local/hermesagent/`), you MUST symlink it: `ln -s /var/www/html/public/local/<plugin> /var/www/html/cs1302a-eq/local/<plugin>`. Without it, static assets (CSS, JS) and PHP pages 404.
+- **Moodle webroot**: `<webroot>` (NOT `/var/www/html`)
+- **Course site directories**: `/var/www/html/<course-code>/` and similar subdirectories serve as Moodle webroots for course-specific sites. Requests through those URLs resolve files relative to the course directory, NOT `/public/`.
+- **Plugin symlink requirement**: When a plugin is installed in `<webroot>/local/` but accessed via a course site URL (e.g., `/<course-code>/local/hermesagent/`), you MUST symlink it: `ln -s <webroot>/local/<plugin> /var/www/html/<course-code>/local/<plugin>`. Without it, static assets (CSS, JS) and PHP pages 404.
 - **Moodle config file**: `/var/www/html/config.php` (DB credentials, dataroot, wwwroot)
-- **Public loader**: `/var/www/html/public/config.php` — shim that requires the parent config
-- **Moodle data directory**: `/var/www/moodledata`
+- **Public loader**: `<webroot>/config.php` — shim that requires the parent config
+- **Moodle data directory**: `<datadir>`
 - **Database**: MariaDB at host `mariadb`, database `moodle`, prefix `mdl_`
 - **Database access**: via `mcp__moodle_db__query` and related tools
 - **PHP runtime**: PHP-FPM running as `www-data` inside a Kubernetes pod (`phpfpm-0`)
 - **Moosh**: installed at `/usr/local/bin/moosh` → symlink to `/opt/moosh/moosh.php` (v1.27)
 - **Moosh source**: `/opt/moosh/` — helper functions in `/opt/moosh/includes/functions.php`
-- **Moosh Moodle discovery**: `find_top_moodle_dir()` walks up from CWD (max 10 levels) looking for `config.php` + `version.php` + `install.php`. It does NOT read `~/.moosh/moosh.json`. **Always `cd /var/www/html/public` before running Moosh.**
+- **Moosh Moodle discovery**: `find_top_moodle_dir()` walks up from CWD (max 10 levels) looking for `config.php` + `version.php` + `install.php`. It does NOT read `~/.moosh/moosh.json`. **Always `cd <webroot>` before running Moosh.**
 - **Moosh flag**: always use `-n` (no-user-check) because root runs Moosh but Moodle data is owned by `www-data`
 - **Moosh**: installed at `/usr/local/bin/moosh` → symlink to `/opt/moosh/moosh.php` (v1.27). Works in this environment when the plugin cache is valid. See "Course Backup and Restore (CLI)" below.
 
@@ -64,12 +64,12 @@ The LTI tool recreates deleted accounts on the next launch if it sends the same 
 **Always prefer Moosh over Moodle's CLI scripts** — Moosh `course-backup` completes in seconds vs. minutes for the same course.
 
 ```bash
-cd /var/www/html/public && moosh -n course-backup --template --filename=/tmp/backup.mbz <course_id>
-cd /var/www/html/public && moosh -n course-restore /tmp/backup.mbz <category_id>
+cd <webroot> && moosh -n course-backup --template --filename=/tmp/backup.mbz <course_id>
+cd <webroot> && moosh -n course-restore /tmp/backup.mbz <category_id>
 ```
 
 - `--template` excludes user enrolments, grades, and user-generated content. Use `--fullbackup` for a complete clone including enrolments.
-- `course-restore` auto-creates a new course in the target category with an auto-generated shortname (e.g. `cs1302_25b_1`).
+- `course-restore` auto-creates a new course in the target category with an auto-generated shortname (e.g. `<course>_25b_1`).
 - Rename the restored course with `moosh -n sql-run "UPDATE mdl_course SET shortname='...', fullname='...' WHERE id=<new_id>"` (no trailing semicolon).
 - Warning messages during restore (e.g. `exifremover_service::flip_gd()`) are non-fatal — files still restore correctly.
 - Verify with `moosh -n course-info <new_id>` (check enrolled users = 0) and `moosh -n course-enrol-list <new_id>`.
@@ -121,19 +121,19 @@ Scan for non-core plugins by checking each plugin type directory:
 
 ```bash
 # Custom activity modules (mod)
-for d in /var/www/html/public/mod/*/; do basename "$d"; done
+for d in <webroot>/mod/*/; do basename "$d"; done
 
 # Custom local plugins
-ls /var/www/html/public/local/
+ls <webroot>/local/
 
 # Custom auth plugins
-ls /var/www/html/public/auth/
+ls <webroot>/auth/
 
 # Enrol plugins
-ls /var/www/html/public/enrol/
+ls <webroot>/enrol/
 
 # Theme plugins
-ls /var/www/html/public/theme/
+ls <webroot>/theme/
 ```
 
 Core plugin names to exclude when identifying custom ones:
@@ -152,7 +152,7 @@ SELECT plugin, version, release, component FROM mdl_config_plugins ORDER BY plug
 Use `moosh plugin-list -v` to find the latest version of a plugin from the Moodle plugin directory:
 
 ```bash
-cd /var/www/html/public && moosh -n plugin-list -v 2>&1 | grep -i openaicompatible
+cd <webroot> && moosh -n plugin-list -v 2>&1 | grep -i openaicompatible
 # Output: aiprovider_openaicompatible,2025121000,2026060200,https://marketplace.moodle.com/...
 # Columns: name,oldest_version,latest_version,download_url
 ```
@@ -170,16 +170,16 @@ cd /var/www/html/public && moosh -n plugin-list -v 2>&1 | grep -i openaicompatib
 ### Moosh `plugin-install` (recommended)
 
 ```bash
-cd /var/www/html/public && moosh -n plugin-install -f <plugin_name>
+cd <webroot> && moosh -n plugin-install -f <plugin_name>
 ```
 
-- Always `cd /var/www/html/public` first (Moosh discovers Moodle from CWD).
+- Always `cd <webroot>` first (Moosh discovers Moodle from CWD).
 - Always use `-n` to skip the ownership check (root runs Moosh, `www-data` owns Moodle data).
 - Always use `-f` to force installation — Moodle 5.2 is so new that most plugins report "not supported for your Moodle version" and refuse without `-f`.
 
 **Prerequisite**: Moosh needs an up-to-date plugin database. If `plugins.json` is missing or stale, run:
 ```bash
-cd /var/www/html/public && moosh -n plugin-list 2>&1
+cd <webroot> && moosh -n plugin-list 2>&1
 ```
 This downloads `~/.moosh/plugins.json`. (It may loop if external connectivity is unavailable — see Pitfalls below.)
 
@@ -195,13 +195,13 @@ Use when `plugin-install` fails due to network issues or the plugin isn't in the
 
 2. **Extract into the correct plugin directory:**
    ```bash
-   unzip -o /tmp/plugin.zip -d /var/www/html/public/local/    # for local_ plugins
-   # or /var/www/html/public/mod/, /var/www/html/public/auth/, etc.
+   unzip -o /tmp/plugin.zip -d <webroot>/local/    # for local_ plugins
+   # or <webroot>/mod/, <webroot>/auth/, etc.
    ```
 
 3. **Set correct ownership:**
    ```bash
-   chown -R www-data:www-data /var/www/html/public/local/adminer
+   chown -R www-data:www-data <webroot>/local/adminer
    ```
 
 4. **Verify version.php matches DB**: If the plugin is already in the DB with a higher version, update `version.php` accordingly:
@@ -210,7 +210,7 @@ Use when `plugin-install` fails due to network issues or the plugin isn't in the
    # Check version.php against DB version
    ```
 
-5. **Run the Moodle upgrade** (note: script lives under `/var/www/html/admin/cli/`, NOT `/var/www/html/public/admin/cli/`):
+5. **Run the Moodle upgrade** (note: script lives under `/var/www/html/admin/cli/`, NOT `<webroot>/admin/cli/`):
    ```bash
    cd /var/www/html && php admin/cli/upgrade.php --non-interactive
    ```
@@ -251,7 +251,7 @@ Some plugins show as "To be installed" with no version string in the UI. Add `$p
 ### If download sources are unavailable
 
 If moodle.org rate-limits you (HTTP 429) and GitHub is unreachable:
-- Check if the plugin was already extracted from a prior attempt: `find /var/www/html/public/local -name "<plugin>" -type d`
+- Check if the plugin was already extracted from a prior attempt: `find <webroot>/local -name "<plugin>" -type d`
 - The plugin may already exist in the DB — just update `version.php` and re-run upgrade.
 
 ## Known Custom Plugins (as of 2026-07-18)
@@ -287,7 +287,7 @@ $section = $DB->get_record('course_sections', ['course' => 3, 'section' => 1]);
 
 // 3. Insert course_modules row
 $cm = new stdClass();
-$cm->course = 3;
+$cm->course = <cid>;;
 $cm->module = $modid;
 $cm->section = $section->section;
 $cm->visible = 1;
@@ -296,7 +296,7 @@ $cmid = $DB->insert_record('course_modules', $cm);
 
 // 4. Insert activity instance (fill in activity-specific fields)
 $forum = new stdClass();
-$forum->course = 3;
+$forum->course = <cid>;;
 $forum->type = 'qa';
 $forum->name = 'CE-Quiz FAQ';
 $forum->intro = 'Post your questions here.';
@@ -314,10 +314,10 @@ For **forum** activities, key fields in `mdl_forum`: `type` (qa/standard/social)
 
 **After creating, you MUST do TWO cache purges:**
 
-1. `cd /var/www/html/public && moosh -n cache-clear`
+1. `cd <webroot> && moosh -n cache-clear`
 2. **Delete the file-based moduleinfo cache** for the affected course. Moodle caches course module structure as files and `moosh cache-clear` does NOT clear them:
    ```bash
-   rm -rf /var/www/moodledata/cache/local_file/core_coursemodinfo/<courseid>-c-cache/
+   rm -rf <datadir>/cache/local_file/core_coursemodinfo/<courseid>-c-cache/
    ```
    Without step 2, the activity exists in the DB but **will not appear in the course UI**. Moodle rebuilds the cache on next page load.
 
@@ -328,10 +328,10 @@ For **forum** activities, key fields in `mdl_forum`: `type` (qa/standard/social)
 ## Pitfalls
 
 ### Moosh does NOT read `~/.moosh/moosh.json` for path discovery
-Moosh discovers Moodle by walking up the directory tree from CWD, looking for `config.php` + `version.php` + `install.php` (see `is_top_moodle_dir()` in `/opt/moosh/includes/functions.php`). Setting `"moodlepath"` in `~/.moosh/moosh.json` has **no effect**. Always `cd /var/www/html/public` before running Moosh commands.
+Moosh discovers Moodle by walking up the directory tree from CWD, looking for `config.php` + `version.php` + `install.php` (see `is_top_moodle_dir()` in `/opt/moosh/includes/functions.php`). Setting `"moodlepath"` in `~/.moosh/moosh.json` has **no effect**. Always `cd <webroot>` before running Moosh commands.
 
 ### Moosh `-m` / `-c` flags do not exist
-The correct moodle-path flag is `-p` (or `--moodle-path`). Flags `-c` and `-m` cause exit 255 with no output. Always `cd /var/www/html/public` before running Moosh instead of relying on a path flag.
+The correct moodle-path flag is `-p` (or `--moodle-path`). Flags `-c` and `-m` cause exit 255 with no output. Always `cd <webroot>` before running Moosh instead of relying on a path flag.
 
 ### Moosh requires `-n` flag in this environment
 Moodle data is owned by `www-data` but Moosh runs as `root`. Always pass `-n` (no-user-check) or Moosh will refuse to run with: "One of your Moodle data directories ... is owned by different user."
@@ -364,11 +364,11 @@ This version of Moosh (1.27) does not include `course-set-field`. Use `moosh -n 
 Moosh can crash with exit 255 and no output when `~/.moosh/plugins.json` is corrupted or when an invalid CLI flag is used (e.g. `-c` instead of `-p`, or `-m`). Always use `php -d display_errors=1` to see the actual error. Fix by removing the file and regenerating:
 ```bash
 rm -f ~/.moosh/plugins.json
-cd /var/www/html/public && moosh -n info-plugins
+cd <webroot> && moosh -n info-plugins
 ```
 
 ### Moosh CLI flags
-The correct moodle-path flag is `-p` (or `--moodle-path`). There is **no `-c` or `-m` flag** — using them causes exit 255 with no output unless PHP errors are enabled. Prefer `cd /var/www/html/public` instead of using `-p`.
+The correct moodle-path flag is `-p` (or `--moodle-path`). There is **no `-c` or `-m` flag** — using them causes exit 255 with no output unless PHP errors are enabled. Prefer `cd <webroot>` instead of using `-p`.
 
 ## Code Runner Prototype Management
 
@@ -377,13 +377,13 @@ Code Runner prototypes are stored as special `coderunner` questions in the `CR_P
 ### Symptoms of a missing prototype
 
 ```
-Broken question (missing or duplicate prototype 'python3_CS1302_prototype'). Cannot be run.
+Broken question (missing or duplicate prototype 'python3_<course>_prototype'). Cannot be run.
 ```
 
 ### Check for a missing prototype
 
 ```bash
-moosh -p /var/www/html/public -n sql-run "SELECT id, name, qtype, parent FROM mdl_question WHERE name = 'python3_CS1302_prototype'"
+moosh -p <webroot> -n sql-run "SELECT id, name, qtype, parent FROM mdl_question WHERE name = 'python3_<course>_prototype'"
 ```
 
 ### Import a prototype from Moodle XML
@@ -394,13 +394,13 @@ moosh -p /var/www/html/public -n sql-run "SELECT id, name, qtype, parent FROM md
 
 2. **Delete any broken placeholder** if one exists:
    ```bash
-   moosh -p /var/www/html/public -n sql-run "DELETE FROM mdl_question WHERE id = <broken_id>"
+   moosh -p <webroot> -n sql-run "DELETE FROM mdl_question WHERE id = <broken_id>"
    ```
 
 3. **Insert into `mdl_question`** (reuse the freed ID to avoid auto-increment gaps):
    ```sql
    INSERT INTO mdl_question (id, parent, name, questiontext, questiontextformat, generalfeedback, generalfeedbackformat, defaultmark, penalty, qtype, length, stamp, timecreated, timemodified, createdby, modifiedby)
-   VALUES (4274, 2, 'python3_CS1302_prototype', '# Prototype of python3 for CS1302', 0, '', 0, 1, 0, 'coderunner', 1, 'moodle@20250625', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), 2, 2)
+   VALUES (4274, 2, 'python3_<course>_prototype', '# Prototype of python3 for <course>', 0, '', 0, 1, 0, 'coderunner', 1, 'moodle@20250625', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), 2, 2)
    ```
    - `parent=2` is the `CR_PROTOTYPES` category ID.
    - `penalty=0` for prototypes (not `0.3333333`).
@@ -408,7 +408,7 @@ moosh -p /var/www/html/public -n sql-run "SELECT id, name, qtype, parent FROM md
 4. **Insert into `mdl_question_coderunner_options`**:
    ```sql
    INSERT INTO mdl_question_coderunner_options (questionid, coderunnertype, prototypetype, allornothing, showsource, precheck, hidecheck, answerboxlines, answerboxcolumns, answerpreload, useace, penaltyregime, validateonsave, template, iscombinatortemplate, allowmultiplestdins, testsplitterre, language, grader, hoisttemplateparams, extractcodefromjson, templateparamslang, templateparamsevalpertry, templateparamsevald, twigall, uiplugin, attachments, attachmentsrequired, maxfilesize, displayfeedback, giveupallowed)
-   VALUES (4274, 'python3_CS1302_prototype', 2, 0, 0, 2, 0, 18, 100, '# YOUR CODE HERE', 1, '10, 20, ...', 1, 'TEMPLATE_CONTENT', 1, 0, '|SPLITTER_RE|ms', 'python3', 'EqualityGrader', 1, 1, 'None', 0, '{}', 0, 'ace', 0, 0, 10240, 1, 0)
+   VALUES (4274, 'python3_<course>_prototype', 2, 0, 0, 2, 0, 18, 100, '# YOUR CODE HERE', 1, '10, 20, ...', 1, 'TEMPLATE_CONTENT', 1, 0, '|SPLITTER_RE|ms', 'python3', 'EqualityGrader', 1, 1, 'None', 0, '{}', 0, 'ace', 0, 0, 10240, 1, 0)
    ```
    - `prototypetype=2` means user-defined prototype (1 = built-in).
    - Shell-quote the `template` field carefully — Twig `{{ }}` is safe in SQL, but PHP single quotes inside the template must be escaped.
@@ -421,12 +421,12 @@ moosh -p /var/www/html/public -n sql-run "SELECT id, name, qtype, parent FROM md
 
 5. **Clear Moodle cache** via moosh:
    ```bash
-   moosh -p /var/www/html/public -n cache-clear
+   moosh -p <webroot> -n cache-clear
    ```
 
 6. **Verify**:
    ```bash
-   moosh -p /var/www/html/public -n sql-run "SELECT q.id, q.name, q.parent, cat.name FROM mdl_question q JOIN mdl_question_categories cat ON q.parent = cat.id WHERE q.name = 'python3_CS1302_prototype'"
+   moosh -p <webroot> -n sql-run "SELECT q.id, q.name, q.parent, cat.name FROM mdl_question q JOIN mdl_question_categories cat ON q.parent = cat.id WHERE q.name = 'python3_<course>_prototype'"
    ```
 
 ### Key tables and columns
@@ -449,7 +449,7 @@ The easiest way is to reuse the question ID across all tables:
 -- Reuse the same ID (e.g. 4274) across all three question tables
 INSERT INTO mdl_question_bank_entries (id, questioncategoryid) VALUES (4274, 2);
 INSERT INTO mdl_question_versions (id, questionbankentryid, version, questionid, status) VALUES (4274, 4274, 1, 4274, 'ready');
-INSERT INTO mdl_question (id, parent, name, ...) VALUES (4274, 2, 'python3_CS1302_prototype', ...);
+INSERT INTO mdl_question (id, parent, name, ...) VALUES (4274, 2, 'python3_<course>_prototype', ...);
 ```
 
 ### Verify the prototype is discoverable
@@ -463,7 +463,7 @@ $_SERVER['SCRIPT_NAME'] = '/admin/cli/check-prototype.php';
 require_once('/var/www/html/config.php');
 $coursectx = context_course::instance(<course_id>);
 $qtype = new qtype_coderunner();
-echo 'Prototype exists: ' . var_export($qtype->get_prototype('python3_CS1302_prototype', $coursectx, true), true) . PHP_EOL;
+echo 'Prototype exists: ' . var_export($qtype->get_prototype('python3_<course>_prototype', $coursectx, true), true) . PHP_EOL;
 ?>
 ```
 Must return `true`. If it returns `false`, check that `mdl_question_bank_entries` and `mdl_question_versions` both exist and reference the correct IDs.
@@ -483,7 +483,7 @@ Lab groups (T01, T02, LA1–LA4, LB1–LB3, etc.) must exist in the course befor
 ```php
 define('CLI_SCRIPT', TRUE);
 require_once('/var/www/html/config.php');
-$data = (object)['courseid' => 3, 'name' => 'T01', 'description' => '', 'descriptionformat' => FORMAT_MOODLE];
+$data = (object)['courseid' => <cid>, 'name' => 'T01', 'description' => '', 'descriptionformat' => FORMAT_MOODLE];
 $DB->insert_record('groups', $data);
 ```
 
@@ -498,7 +498,7 @@ $DB->insert_record('groups', $data);
 
 3. **Purge caches** after DB changes:
    ```bash
-   cd /var/www/html/public && moosh -n cache-clear
+   cd <webroot> && moosh -n cache-clear
    ```
 
 ### Key table
@@ -563,7 +563,7 @@ After any raw SQL change to Moodle tables, **always purge caches** before verify
 ### Moosh `php-eval` works in Moosh 1.27
 `moosh php-eval` IS available in Moosh 1.27 and works for running arbitrary PHP with Moodle's `$DB` object available. Usage:
 ```bash
-cd /var/www/html/public && moosh -n php-eval "echo \$DB->count_records('course') . PHP_EOL;"
+cd <webroot> && moosh -n php-eval "echo \$DB->count_records('course') . PHP_EOL;"
 ```
 Note: some Moodle API functions (`purge_all_caches()`, `context_course::instance()`, etc.) may not be available in the moosh bootstrap context — for those, write a standalone PHP script that requires `/var/www/html/config.php`.
 
@@ -669,7 +669,7 @@ Moodle's SMTP hosts setting uses the config key `smtphosts` (with an `h` before 
 
 ## SEB (Safe Exam Browser) Quiz Access
 
-The `quizaccess_seb` plugin enforces Safe Exam Browser requirements on Moodle quizzes. Plugin lives at `/var/www/html/public/mod/quiz/accessrule/seb/`.
+The `quizaccess_seb` plugin enforces Safe Exam Browser requirements on Moodle quizzes. Plugin lives at `<webroot>/mod/quiz/accessrule/seb/`.
 
 ### SEB config modes (`requiresafeexambrowser`)
 
@@ -750,7 +750,7 @@ Query `mdl_config_plugins` where `plugin='quizaccess_seb'`:
 - `autoreconfigureseb` — auto-configure SEB on launch
 - `downloadlink` — URL for downloading SEB
 
-### Batch template update — verified procedure (2026-09-14, cs1302a_26a)
+### Batch template update — verified procedure (2026-09-14, <coursecode>)
 
 - In **template mode** the SEB config (incl. URL filtering) is defined **entirely in the template XML** — `process_seb_template()` only layers per-quiz `allowuserquitseb`, quit password/URL, and enforced `startURL` / `sendBrowserExamKey` / modern-WebView on top. So switching `templateid` to a urlfilter template is sufficient for the filtering itself.
 - **`allowuserquitseb` NULL → `allowQuit` silently becomes false** (the bool map treats non-1 as false). When making quizzes "identical to reference quiz X", set `allowuserquitseb` explicitly to match the reference quiz.
@@ -789,7 +789,7 @@ Don't trust the browser or the DB dump — run the real `format_text()` pipeline
 
 ```php
 define('CLI_SCRIPT', true);
-require '/var/www/html/public/config.php';
+require '<webroot>/config.php';
 $PAGE = new moodle_page();
 $PAGE->set_url(new moodle_url('/'));
 $PAGE->set_context(context_system::instance());
@@ -814,8 +814,8 @@ The built-in AI subsystem (provider-agnostic; this site uses the `aiprovider_ope
 | `mdl_ai_action_explain_text` / `mdl_ai_action_summarise_text` | Usage log — stores full prompt + generated content (privacy-sensitive!) |
 | `mdl_course.enableaitools` | Course-level AI toggle |
 | `mdl_course_modules.enableaitools` | Per-activity AI toggle (NULL/0 = off, 1 = on) |
-| `/var/www/html/public/ai/` | Core AI plugin: `placement/` (courseassist, editor), `classes/aiactions/`, templates |
-| `/var/www/html/public/lang/en/ai.php` | UI strings: `action_explain_text` = "Explain text", `action_summarise_text` = "Summarise text", responses labeled "Generated by AI" with **Regenerate** / Copy buttons |
+| `<webroot>/ai/` | Core AI plugin: `placement/` (courseassist, editor), `classes/aiactions/`, templates |
+| `<webroot>/lang/en/ai.php` | UI strings: `action_explain_text` = "Explain text", `action_summarise_text` = "Summarise text", responses labeled "Generated by AI" with **Regenerate** / Copy buttons |
 
 - **Canonical doc link for students:** `https://docs.moodle.org/en/AI`. Note: docs.moodle.org is behind a Cloudflare challenge from this pod — `curl` returns 403; don't rely on fetching it to verify.
 - **Quiz AI:** the explain/summarise actions can be applied to quiz question content (e.g. in CE-Quiz the "Explain text" action is configured to give hints, not answers, via a Socratic system instruction in `actionconfig`).
@@ -834,14 +834,14 @@ Verified 2026-09-14. There is **no single "default" provider** — `ai/classes/m
 
 ## Adding a Discussion to a Forum (e.g. Q&A FAQ entries)
 
-For `qanda`-type forums (e.g. cs1302a_26a "CE-Quiz FAQ", forum id 11, cmid 659), each discussion is one Q&A: the **question is `mdl_forum_discussions.name`** and the **answer is a `mdl_forum_posts` row** with `discussion=<id>`, `parent=0`.
+For `qanda`-type forums (e.g. <coursecode> "CE-Quiz FAQ", forum id 11, cmid 659), each discussion is one Q&A: the **question is `mdl_forum_discussions.name`** and the **answer is a `mdl_forum_posts` row** with `discussion=<id>`, `parent=0`.
 
 Pattern (PHP bootstrap, as admin user — check the author of existing entries first, e.g. `userid=2`):
 
 ```php
 $now = time();
 $d = new stdClass();
-$d->course = 3; $d->forum = 11;
+$d->course = <cid>;; $d->forum = 11;
 $d->name = 'Question text?';          // shown as discussion title
 $d->userid = 2; $d->groupid = -1; $d->assessed = 1;
 $d->timestart = 0; $d->timeend = 0; $d->pinned = 0; $d->timelocked = 0;

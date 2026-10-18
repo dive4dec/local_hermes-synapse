@@ -17,9 +17,9 @@ in the account, or you need to know whether cross-signing / recovery key
 exists before advising on Element's "Verify your identity" flow.
 
 Usage:
-  /var/www/moodledata/.hermes/venv/bin/python matrix_device_probe.py [path/to/.env]
+  <datadir>/.hermes/venv/bin/python matrix_device_probe.py [path/to/.env]
 
-Defaults for .env: $HERMES_HOME/.env, /var/www/moodledata/.hermes/.env, ./.env
+Defaults for .env: $HERMES_HOME/.env, <datadir>/.hermes/.env, ./.env
 """
 import json
 import os
@@ -34,7 +34,7 @@ def find_env():
         return sys.argv[1]
     cands = [
         os.path.expanduser(os.environ.get("HERMES_HOME", "")) + "/.env",
-        "/var/www/moodledata/.hermes/.env",
+        "<datadir>/.hermes/.env",
         os.path.join(os.getcwd(), ".env"),
     ]
     for c in cands:

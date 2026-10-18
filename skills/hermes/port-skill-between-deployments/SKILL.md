@@ -21,7 +21,7 @@ A working skill is usually laced with **deployment-specific values that are WRON
 2. **Generalize the prose.** Replace hard values with placeholders + "adapt for your install": course id → `<cid>` / `$CID`; moodle root → `$MOODLE_ROOT` / `<your_moodle_root>`; CIDRs → "ask the instructor"; test accounts → "derive from your own roster". Keep ONE concrete example but mark it explicitly as a single deployment's numbers so it reads as **calibration**, not instruction.
 3. **Make scripts env-overridable.** In each `scripts/*.php`, hoist the deployment constants to the top and drive them from env vars with the current deployment as the default, so the SAME file works on both sides:
    ```php
-   $MOODLE_ROOT = getenv('MOODLE_ROOT') ?: '/var/www/html/public';
+   $MOODLE_ROOT = getenv('MOODLE_ROOT') ?: '<webroot>';
    $CID         = getenv('CID') ?: 3;
    $host        = getenv('SMTP_HOST') ?: 'smtp.example.edu.hk';
    require($MOODLE_ROOT . '/config.php');
@@ -40,7 +40,7 @@ A working skill is usually laced with **deployment-specific values that are WRON
 ## Pitfalls
 - **`php -l` is broken in the pod** (false "Errors parsing" on valid code) — never gate a transfer on lint; run the script.
 - **Inline the script, don't reference it.** "Script attached separately" leaves the other agent unable to self-serve. Embed verbatim in the packet.
-- **Generalize the data-source, not just the paths.** `WHERE courseid = 3` is wrong on the target — make it `$CID`. A hardcoded list of this course's test emails will mis-fire elsewhere — tell them to derive it from their own roster.
+- **Generalize the data-source, not just the paths.** `WHERE courseid = <cid>` is wrong on the target — make it `$CID`. A hardcoded list of this course's test emails will mis-fire elsewhere — tell them to derive it from their own roster.
 - **Keep one labeled worked example.** Stripping ALL concrete numbers untethers the skill; the other agent needs the source's real numbers as a calibration reference, clearly marked "source deployment".
 - **Don't over-strip.** Universally-true facts (Moodle 5.x table schemas, "Precheck is a step flag, not a state", "sumgrades is on the question scale") are the VALUE — they must survive the transfer.
 - **Don't pre-bake dates into the packet or email.** PHP `date()` on this pod shows UTC+8 while the system clock is UTC (a date/lateness claim computed the wrong way is how a "still open" claim was wrong ~9h after close). Teach the other agent to compute `time()` vs `timeopen`/`timeclose` at run time, not to copy a stale "N days left".

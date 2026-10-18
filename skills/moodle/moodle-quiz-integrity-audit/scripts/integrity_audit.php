@@ -1,20 +1,24 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 // moodle-quiz-integrity-audit — reusable per-question step-trace audit.
 // Copy, edit the CONFIG block, run:
-//   cd /var/www/moodledata/.hermes && php -d display_errors=1 /tmp/integrity_audit.php
+//   cd <datadir>/.hermes && php -d display_errors=1 /tmp/integrity_audit.php
 // Reads only (no writes). Outputs: stats, PRIMARY flags, WATCH list, and the
 // no-check-anomaly cohort with per-question traces.
 define('CLI_SCRIPT', true);
 define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php');
+require_once($WEBROOT.'/lib/setup.php');
 global $DB;
 $Q = fn($sql, $p = []) => $DB->get_records_sql($sql, $p);
 function t($l, $fn) { try { return $fn(); } catch (Throwable $e) { echo "ERR $l: " . $e->getMessage() . "\n"; exit(1); } }
 
 // ===== CONFIG =====
 $QUIZ      = 58;          // mdl_quiz.id  (CE-Quiz 1 = 58)
-$COURSE    = 3;           // course id, for group lookup (cs1302a_26a = 3)
+$COURSE    = 3;           // course id, for group lookup (<coursecode> = 3)
 $INFO_SLOT = 1;           // first non-graded slot (info page)
 $MAX_SCORE = 4;           // sum of maxmark over graded slots (DO NOT use mdl_quiz.grade)
 $MIN_SCORE = 0.75;        // primary: min score fraction

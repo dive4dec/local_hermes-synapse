@@ -1,6 +1,6 @@
 ---
 name: moodle-cequiz-schedule-propagation
-description: "Fix CE-Quiz and E-Quiz timing and group overrides for cs1302a_26a based on weekly lab schedule and semester schedule. Handles catch-up weeks, helpers group, and E-Quiz one-week-earlier windows."
+description: "Fix CE-Quiz and E-Quiz timing and group overrides for <coursecode> based on weekly lab schedule and semester schedule. Handles catch-up weeks, helpers group, and E-Quiz one-week-earlier windows."
 ---
 
 # CE-Quiz and E-Quiz Schedule Propagation
@@ -22,7 +22,7 @@ Fix CE-Quiz and E-Quiz timing, group overrides, and lab session groups after res
 - Week 8 has no regular labs — only catch-up for CE3/CE4/CE5 Thursday sessions.
 - Week 9 is Lab6/CE6.
 
-## Group ID reference (course cs1302a_26a)
+## Group ID reference (course <coursecode>)
 
 | Group | ID |
 |---|---|
@@ -30,7 +30,7 @@ Fix CE-Quiz and E-Quiz timing, group overrides, and lab session groups after res
 | LA1–LA4 | 64, 56, 63, 70 |
 | LB1–LB3 | 62, 69, 72 |
 | LC1–LC3 | 68, 58, 77 |
-| helpers | 89 |
+| helpers | <helpergid> |
 
 ## Weekly lab schedule template
 
@@ -72,7 +72,7 @@ d. **Catch-up weeks** — CE3 (week 5) misses Thu; CE4 (week 6) misses Thu; CE5 
    - CE4 catch-up: Thu Oct 14 (Week 7)
    - CE5 catch-up: Thu Oct 22 (Week 8)
 
-e. **Helpers override** — group 89, `timeopen` = one week before quiz, `timeclose` = quiz Sunday, `timelimit=2700`, `attempts=0` (unlimited).
+e. **Helpers override** — group <helpergid>, `timeopen` = one week before quiz, `timeclose` = quiz Sunday, `timelimit=2700`, `attempts=0` (unlimited).
 
 ### 3. For each E-Quiz
 
@@ -82,7 +82,7 @@ Set `timeopen` and `timeclose` to the week before the corresponding CE-Quiz. E-Q
 
 ```bash
 php script.php 2>&1
-cd /var/www/html/public && moosh -n cache-clear
+cd <webroot> && moosh -n cache-clear
 ```
 
 Always run `moosh -n cache-clear` AFTER the PHP script's own cache purge.

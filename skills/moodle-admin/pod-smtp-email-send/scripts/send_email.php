@@ -57,7 +57,7 @@ $greet = rd($conn);
 echo "$greet";
 if (strpos($greet, '220') !== 0) { fwrite(STDERR, "No 220 greeting\n"); exit(1); }
 
-expect(cmd($conn, 'EHLO cs1302a.cityu.local'), '250', 'ehlo');
+expect(cmd($conn, 'EHLO <coursecode>.cityu.local'), '250', 'ehlo');
 expect(cmd($conn, "MAIL FROM:<$from>"), '250', 'mail from');
 expect(cmd($conn, "RCPT TO:<$to>"), '250', 'rcpt to');
 expect(cmd($conn, 'DATA'), '354', 'data');
@@ -71,7 +71,7 @@ $headers = [
     'From: ' . $from,
     'To: ' . $to,
     'Subject: ' . $subject,
-    'Message-ID: <' . uniqid('hermes', true) . '@cs1302a.<domain>>',
+    'Message-ID: <' . uniqid('hermes', true) . '@<coursecode>.<domain>>',
     'Date: ' . gmdate('D, d M Y H:i:s ') . (new DateTime())->format('P'),
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=UTF-8',

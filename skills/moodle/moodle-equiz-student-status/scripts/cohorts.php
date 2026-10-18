@@ -1,4 +1,8 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 /**
  * Moodle quiz student-status cohorts (read-only).
  *
@@ -11,8 +15,8 @@
  *   C. Not enrolled  — on LTI group-sync roster (ltigroups) but no Moodle account
  * Plus: "submitted, grade pending" (submitted but gradebook grade not computed yet).
  *
- * ENVIRONMENT ASSUMPTIONS (verified cs1302a_26a / course 3):
- *  - Moodle webroot /var/www/html/public, run as www-data.
+ * ENVIRONMENT ASSUMPTIONS (verified <coursecode> / course 3):
+ *  - Moodle webroot <webroot>, run as www-data.
  *  - LTI plugin table mdl_ltigroups_roster(courseid, eid, userid, assignments).
  *  - quiz_attempts uses `sumgrades` (NOT sumgrade); that column is on the
  *    QUESTION mark scale, NOT quiz.grade — do not compute % from it directly.
@@ -20,8 +24,8 @@
  */
 define('CLI_SCRIPT', true);
 define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php');
+require_once($WEBROOT.'/lib/setup.php');
 global $DB;
 
 if ($argc < 3) {

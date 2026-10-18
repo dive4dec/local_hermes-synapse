@@ -16,8 +16,8 @@ When a Moodle course route (WWWROOT path) changes, hardcoded full URLs in page c
 ## Prerequisites
 
 Ask the user for:
-1. **Old URL prefix** — e.g. `https://socratic.cs.<domain>/cs1302eq-26a`
-2. **New URL prefix** — e.g. `https://<moodle-host>/cs1302a-eq`
+1. **Old URL prefix** — e.g. `https://socratic.cs.<domain>/<course>eq-26a`
+2. **New URL prefix** — e.g. `https://<moodle-host>/<course-code>`
 
 ## Steps
 
@@ -76,7 +76,7 @@ Write a PHP script that iterates affected rows and applies the replacement. Use 
 ### 4. Purge caches
 
 ```bash
-cd /var/www/html/public && moosh -n cache-clear
+cd <webroot> && moosh -n cache-clear
 ```
 
 ### 5. Verify

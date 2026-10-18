@@ -85,8 +85,7 @@ semantics: `moodle-quiz-question-review` skill, `references/moodle52-schemas.md`
   `contextid` = quiz CM context). Its `id` == `mdl_question_attempts.questionusageid`
   but is NOT `mdl_quiz_attempts.id`. Do not join quiz_attempts.id to
   question_usage.id.
-- **`mdl_question_attempts` has NO `mark` column.** ⚠️ CORRECTED (2026-09-24,
-  KWOK partial-grade session): the old note "earned marks = minfraction *
+- **`mdl_question_attempts` has NO `mark` column.** ⚠️ CORRECTED (2026-09-24, a partial-grade session): the old note "earned marks = minfraction *
   maxmark" is WRONG — `minfraction` is a per-question ASSIGNMENT setting (min
   fraction the question may award) and reads 0.0 even on questions graded full
   marks; it will report every question as 0. Authoritative per-question earned
@@ -114,7 +113,7 @@ semantics: `moodle-quiz-question-review` skill, `references/moodle52-schemas.md`
   come from `mdl_user` via `userid`. `assignments` is JSON: `{"Lec":"C01","Lab":"T02","exam":"m1"}`.
 - **`IN (…)` on this table triggered the bare "Error reading from database" TWICE** (even with
   named params, even flat) while the identical logic via (a) one `get_records('ltigroups_roster',
-  ['courseid'=>3])` fetch + in-PHP set ops, and (b) per-uid `get_record(…, ['courseid'=>3,
+  ['courseid' => <cid>])` fetch + in-PHP set ops, and (b) per-uid `get_record(…, ['courseid' => <cid>,
   'userid'=>$uid])` in a loop, both worked. When a table is flaky under `IN`, fetch the whole
   small table once (203 rows) and do the set math in PHP.
 - Same "selecting a possibly-missing column" signature as §8a: a missing column here reads
@@ -124,11 +123,11 @@ semantics: `moodle-quiz-question-review` skill, `references/moodle52-schemas.md`
 ```php
 define('CLI_SCRIPT', true);
 define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require('<webroot>/config.php');
+require_once('<webroot>/lib/setup.php');
 global $DB;
 ```
-Run: `cd /var/www/moodledata/.hermes && timeout 300 php -d display_errors=1 /tmp/x.php`.
+Run: `cd <datadir>/.hermes && timeout 300 php -d display_errors=1 /tmp/x.php`.
 If a script prints nothing, capture output to a file (`file_put_contents`) — stdout
 can be swallowed under some wrappers.
 
@@ -266,8 +265,8 @@ Surfaced while answering "who attempted CE-Quiz 3 today but missed / failed E-Qu
 - **`$DB->prefix` is protected** — use `$P = $DB->get_prefix();` in CLI/inline SQL. Interpolating `{$DB->prefix}` → "Cannot access protected property mariadb_native_moodle_database::$prefix".
 - **`component = 'core'` on `mdl_role_assignments` can silently 0-out a role lookup.** A/B, same instant, same literal uid list: 63 rows WITHOUT `AND component='core'`, 0 rows WITH it. The level-50 course-context filter already scopes the assignment. If the student-role join returns empty while the component filter is on, drop the filter and re-run before concluding "no roles exist" (this misclassified all 34 in-progress lab students as "staff").
 - **MCP `query` subquery conditions can return a bare 0-row result with NO error.** `WHERE … IN (SELECT …)` came back 0 rows while the expected rows demonstrably existed (a flat literal-uid-list query found them in the same session). A 0 from a subquery-condition query is indistinguishable from genuine absence — and worse when the underlying table is live-changing (attempts flipping `inprogress`→`finished` between queries). If a subquery-condition query returns 0 rows you didn't expect, re-verify with a FLAT literal `IN (1,2,3)` list (or the PHP bootstrap) before reporting "no rows".
-- **Duplicate LTI user accounts:** the same student can hold 2+ `mdl_user` rows — same name + email, both `auth=lti`, both `deleted=0` (KHAMZA Rauan: phantom uid 61 with NO enrolments/attempts + real uid 739 enrolled and attempting). `get_record('user', ['email'=>…])` returns the LOWEST id = the phantom → a "ghost" student who appears and disappears between queries. Before reporting a student as anomalous: `SELECT id, auth, deleted FROM mdl_user WHERE email = ?` and confirm the uid that carries the attempt/enrolment is the real one. Flag the duplicate for cleanup (it confuses gradebook/roster tooling).
-- **Helpers legitimately attempt CE-Quizzes OFF-schedule** (their override opens a week early, unlimited attempts): starts at 01:23 / 09:48 around a 10:00 lab is normal. Exclude helpers by group membership (match by **name** `helpers`; id 89 in course 3 — verify), NOT by start time. Don't flag off-window starts as anomalies for helpers/teachers.
+- **Duplicate LTI user accounts:** the same student can hold 2+ `mdl_user` rows — same name + email, both `auth=lti`, both `deleted=0` (one student: phantom uid 61 with NO enrolments/attempts + real uid 739 enrolled and attempting). `get_record('user', ['email'=>…])` returns the LOWEST id = the phantom → a "ghost" student who appears and disappears between queries. Before reporting a student as anomalous: `SELECT id, auth, deleted FROM mdl_user WHERE email = ?` and confirm the uid that carries the attempt/enrolment is the real one. Flag the duplicate for cleanup (it confuses gradebook/roster tooling).
+- **Helpers legitimately attempt CE-Quizzes OFF-schedule** (their override opens a week early, unlimited attempts): starts at 01:23 / 09:48 around a 10:00 lab is normal. Exclude helpers by group membership (match by **name** `helpers`; id 89 in course <cid> — verify), NOT by start time. Don't flag off-window starts as anomalies for helpers/teachers.
 - **`$DB->get_records_sql` has NO 100-row cap** (that's the MCP `query` tool) — a single `IN (…)` list of a few hundred ids is fine here; you only chunk when the list is huge.
 
 The cross-quiz cohort procedure itself (current vs prerequisite quiz, the moving-target in-progress re-verify, report shape) lives in the `moodle-cross-quiz-cohort` skill.
@@ -342,8 +341,8 @@ JOIN {question_attempt_steps} s
 Bisect with a tiny 5-row probe first — a small variant of a dead shape can still work, which hid the pattern. (Complements §4 "keep queries flat / no subqueries" and §13 "MCP subquery conditions can return bare 0-rows".) Also from this run: the last-step VALUE column is `s.fraction` (nullable decimal) + `s.state` — there is NO `s.data` column (selecting it = bare error; see §11b schema list).
 
 ## 19. `role_assignments` two-condition reads die; single-condition + PHP-intersect works (2026-10-13)
-- `$DB->get_records('role_assignments', ['roleid'=>4,'courseid'=>3])` → bare "Error reading from database" (2-condition array on this table is blocked).
-- `SELECT ra.userid FROM {role_assignments} ra JOIN {role} r ON r.id=ra.roleid WHERE r.shortname='teacher' AND ra.courseid=3` → bare DB error (the `ra.courseid=3` predicate on the JOIN is blocked).
+- `$DB->get_records('role_assignments', ['roleid'=>4,'courseid' => <cid>])` → bare "Error reading from database" (2-condition array on this table is blocked).
+- `SELECT ra.userid FROM {role_assignments} ra JOIN {role} r ON r.id=ra.roleid WHERE r.shortname='teacher' AND ra.courseid = <cid>` → bare DB error (the `ra.courseid = <cid>` predicate on the JOIN is blocked).
 - WORKING: the plain shortname query with NO courseid (`... WHERE r.shortname='teacher'`) returns ALL teachers site-wide; then intersect in PHP with the course enrolment set (the `{user_enrolments}` + `{enrol}` join on `e.courseid=<cid>` works fine — that one is not blocked). `$DB->get_field('user','username',['id'=>$u])` in a 244-iter loop also worked fine, so the block is table/predicate-specific, not a blanket get_records failure. (Related: §13 `component='core'` 0-ing, §15 field-list column combos.)
 
 ## Pointer

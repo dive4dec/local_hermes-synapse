@@ -5,7 +5,7 @@ description: Create Moodle LTI activities via PHP API with proper cache purging.
 
 # Create Moodle LTI Activity
 
-Creates an LTI activity in Moodle's database using PHP API, matching the pattern for JupyterHub notebook links in CS1302 courses.
+Creates an LTI activity in Moodle's database using PHP API, matching the pattern for JupyterHub notebook links in <course> courses.
 
 ## Steps
 
@@ -47,7 +47,7 @@ $ltiid = $DB->insert_record('lti', $lti);
 3. **Create course_modules entry**:
 ```php
 $cm = new stdClass();
-$cm->course = 3;
+$cm->course = <cid>;;
 $cm->module = 14; // lti
 $cm->instance = $ltiid;
 $cm->section = $section_id;

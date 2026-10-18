@@ -88,7 +88,7 @@ ask: *am I on the deployed version?*
    `templateparamsevald`, every test, MCQ `mdl_question_answers`), and runs the
    hidden-char scan in one shot. Schema map: `references/moodle52-schemas.md`.
 2. **Execute every coderunner model answer against its test suite** in Python
-   (venv: `/var/www/moodledata/.hermes/venv/bin/python3`). Harness template:
+   (venv: `<datadir>/.hermes/venv/bin/python3`). Harness template:
    `templates/run_model_answers.py`. Respect CodeRunner semantics
    (`references/moodle52-schemas.md` §Execution) — naive harnesses produce
    false failures (this session: 5 of 11 "failing" runs were harness artifacts).

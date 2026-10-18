@@ -104,7 +104,7 @@ $compl = $DB->count_records('course_modules_completion', ['coursemoduleid' => $C
 // AFTER: all of the above should be 0.
 ```
 
-Then **purge caches** so the UI reflects it: `cd /var/www/html/public && moosh -n cache-clear`
+Then **purge caches** so the UI reflects it: `cd <webroot> && moosh -n cache-clear`
 (quiz + coursemodinfo). Re-run the counts and confirm zero. Report the before→after numbers to
 the user.
 

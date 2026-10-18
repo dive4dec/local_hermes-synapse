@@ -50,8 +50,8 @@ $files = $fs->get_area_files($ctx->id, 'qtype_coderunner', 'datafile', $qid);
 ```
 
 Result here: **zero rows** for 3881, 3883, AND for all three
-`python3_CS1302_prototype` candidates (qids 10659 ctx 969, 4282 ctx 609,
-4281 ctx 18 — course 3 resolves to ctx 609). Contrast: this was the ONE
+`python3_<course>_prototype` candidates (qids 10659 ctx 969, 4282 ctx 609,
+4281 ctx 18 — course <cid> resolves to ctx 609). Contrast: this was the ONE
 coderunner file mechanism that checks out; the naive
 `component='core_question' AND filearea='files'` check (standard Moodle)
 also returns empty and CANNOT distinguish "no files" from "wrong area" —
@@ -66,7 +66,7 @@ JOIN mdl_question q ON q.id=qco.questionid
 JOIN mdl_question_versions qv ON qv.questionid=q.id
 JOIN mdl_question_bank_entries qbe ON qbe.id=qv.questionbankentryid
 JOIN mdl_question_categories qc ON qc.id=qbe.questioncategoryid
-WHERE qco.prototypetype<>0 AND qco.coderunnertype='python3_CS1302_prototype'
+WHERE qco.prototypetype<>0 AND qco.coderunnertype='python3_<course>_prototype'
   -- then pick the one whose category context is available in the quiz context
 ```
 

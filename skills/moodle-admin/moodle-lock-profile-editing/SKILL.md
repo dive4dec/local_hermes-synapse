@@ -27,7 +27,7 @@ Each auth plugin has `field_lock_email` setting:
 
 Check which auth plugins your site uses:
 ```bash
-cd /var/www/html/public && moosh -n php-eval "
+cd <webroot> && moosh -n php-eval "
 global \$DB, \$CFG;
 echo 'Site auth: ' . \$CFG->auth . PHP_EOL;
 \$users = \$DB->get_records_sql('SELECT auth, COUNT(*) as cnt FROM mdl_user GROUP BY auth');
@@ -47,7 +47,7 @@ Code: `admin/roles/classes/define_role_table_basic.php` — the basic table clas
 
 **To set via DB:**
 ```bash
-cd /var/www/html/public && moosh -n php-eval "
+cd <webroot> && moosh -n php-eval "
 global \$DB;
 \$DB->execute('UPDATE mdl_role_capabilities SET permission = 3 WHERE roleid = 7 AND capability = ? AND contextid = 1', ['moodle/user:editownprofile']);
 purge_all_caches();
@@ -85,7 +85,7 @@ echo 'Done';
 ## Example: Why students can edit profiles even when Student role doesn't have editownprofile
 
 ```
-User "Temirlan ADAMOV":
+User "<student-name>":
   System: Authenticated user → moodle/user:editownprofile = Allow
   Course: Student → moodle/user:editownprofile = Not set (Inherit)
 Result: Allow (inherited from Authenticated user)

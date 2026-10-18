@@ -62,7 +62,7 @@ For the main (ungrouped) subwiki use `groupid=0, userid=0`.
 
 ## Format constants
 
-Defined in `/var/www/html/public/lib/weblib.php` (~lines 42-65). Both `wiki.introformat` and `wiki_versions.contentformat` use these:
+Defined in `<webroot>/lib/weblib.php` (~lines 42-65). Both `wiki.introformat` and `wiki_versions.contentformat` use these:
 
 `FORMAT_MOODLE=0`, `FORMAT_HTML=1`, `FORMAT_PLAIN=2`, `FORMAT_WIKI=3` (deprecated), `FORMAT_MARKDOWN=4`.
 
@@ -87,7 +87,7 @@ $wiki->timemodified = time();
 $DB->update_record('wiki', $wiki);
 ```
 
-Then **always** `cd /var/www/html/public && moosh -n cache-clear`.
+Then **always** `cd <webroot> && moosh -n cache-clear`.
 
 ## Verifying a description edit in the UI
 
@@ -114,7 +114,7 @@ Do NOT update `wiki_pages.cachedcontent` directly — it's cache and the module 
 ## Pitfalls
 
 - **`mdl_wiki_suburbs` does NOT exist** (pre-Moodle-4.1 schema). Querying it → "Error reading from database". The current chain is `wiki` → `wiki_subwikis` → `wiki_pages` → `wiki_versions`.
-- **`$DB->get_fields()` and `$DB->describe_table()` do not exist** on `mariadb_native_moodle_database` ("Call to undefined method"). To inspect schema, read `/var/www/html/public/mod/wiki/db/install.xml`.
+- **`$DB->get_fields()` and `$DB->describe_table()` do not exist** on `mariadb_native_moodle_database` ("Call to undefined method"). To inspect schema, read `<webroot>/mod/wiki/db/install.xml`.
 - **Fresh wiki = 0 subwikis/pages.** Don't conclude "no content" — the description is in `wiki.intro`.
 - **`wid` param in `view.php` = `mdl_wiki.id`** (= `course_modules.instance`), not the course-module id or subwiki id. `view.php?id=<cmid>` is the CM id.
 - **Always `moosh -n cache-clear`** after any DB change so the UI reflects it.

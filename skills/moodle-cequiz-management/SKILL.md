@@ -21,7 +21,7 @@ Manage CE-Quiz timing and group overrides. CE-Quizzes are weekly lab-based forma
 - **Lab0** is a demo CE-Quiz with no group overrides (single global window, all groups share the same time)
 - Each lab section is a **Moodle group** with its own time override (50-minute window)
 - **Override `timelimit` and `attempts` MUST match the quiz defaults** — set `timelimit=2700` (45 min) and `attempts=1`. Setting `timelimit=0` does NOT inherit — it breaks the override.
-- **Helpers group** (id=89) gets a special override: opens **one week before** the quiz, unlimited attempts (`attempts=0`), same timelimit.
+- **Helpers group** (id=<helpergid>) gets a special override: opens **one week before** the quiz, unlimited attempts (`attempts=0`), same timelimit.
 - **Catch-up weeks** — Weeks 5/6/7/8 have shifted Thursday sessions. CE-Quiz 3 (Week 5) has no Thu labs → Thu labs are added as catch-up in Week 6. CE-Quiz 4 → catch-up in Week 7. CE-Quiz 5 → catch-up in Week 8.
 
 ## Workflow
@@ -29,8 +29,8 @@ Manage CE-Quiz timing and group overrides. CE-Quizzes are weekly lab-based forma
 ### 1. Read the schedules from Obsidian vault
 
 ```bash
-/var/www/moodledata/.hermes/obsidian-vault/CS1302A.Weekly.Lab.Schedule.md
-/var/www/moodledata/.hermes/obsidian-vault/CS1302A.Semester.Schedule.md
+<datadir>/.hermes/obsidian-vault/<coursecode>.Weekly.Lab.Schedule.md
+<datadir>/.hermes/obsidian-vault/<coursecode>.Semester.Schedule.md
 ```
 
 ### 2. Identify which groups have lab sessions that week
@@ -56,7 +56,7 @@ $_SERVER['SCRIPT_NAME'] = '/admin/cli/fix.php';
 require_once('/var/www/html/config.php');
 
 $data = (object) [
-    'courseid' => 3,        // cs1302a_26a
+    'courseid' => <cid>,        // <coursecode>
     'name' => 'T01',
     'description' => '',
     'descriptionformat' => FORMAT_MOODLE,
@@ -109,7 +109,7 @@ foreach ($slots as $slot) {
 cache_helper::purge_by_event('changesincourse');
 ```
 
-## Quiz ID mapping (cs1302a_26a, course id=3)
+## Quiz ID mapping (<coursecode>, course id=3)
 
 | Quiz name | ID | Section |
 |---|---|---|
@@ -131,7 +131,7 @@ cache_helper::purge_by_event('changesincourse');
 - **E-Quiz timing** — each E-Quiz N should open one week before its corresponding CE-Quiz N (global window only, no group overrides needed for E-Quizzes).
 - **Moodle cache purge** — the user demands `moosh -n cache-clear` BEFORE every verification check, not after. If you skip this step, the user will not be able to confirm the changes.
 - **Delete overrides before creating** — never append; always start fresh to avoid stale entries.
-- **Read group IDs from the DB** — group IDs change between semesters. Never hardcode; query `mdl_groups WHERE courseid = 3`.
+- **Read group IDs from the DB** — group IDs change between semesters. Never hardcode; query `mdl_groups WHERE courseid = <cid>`.
 - **Groups must exist before creating overrides** — create missing groups first.
 - **CE-Quiz N ≠ Week N** — CE-Quiz 1 runs in Week 3 (Lab1). CE-Quiz number matches Lab number, not Week number.
 - **Lab0 has no group overrides** — it's a demo with a single global window.

@@ -1,4 +1,8 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 // jobe_probe.php — READ-ONLY Jobe health + head-of-line-blocking probe.
 // Reads jobe_host/jobe_apikey from the live Moodle config, then fires:
 //   1) trivial script            (expect ~0.2s, outcome 15)
@@ -9,8 +13,8 @@
 // Usage: php jobe_probe.php
 define('CLI_SCRIPT', true);
 define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php');
+require_once($WEBROOT.'/lib/setup.php');
 
 $c = $CFG;
 $port = !empty($c->dbport) ? (int)$c->dbport : 3306;

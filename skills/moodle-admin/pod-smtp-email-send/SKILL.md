@@ -24,10 +24,10 @@ The **only verified working** email path on this pod: drive the **open campus re
 
 - Server: `<smtp-host>:587` → announces `mail.cs.<domain>` (Sendmail 8.15.1).
 - **No AUTH, no STARTTLS advertised** — plain ESMTP: `EHLO` → `MAIL FROM` → `RCPT TO` → `DATA` → `QUIT`. User confirmed the relay needs no credentials.
-- Pod egresses as `144.214.120.51` (`<moodle-host>`); the EHLO banner notes "(may be forged)" — the relay trusts campus source IPs.
+- Pod egresses as `<pod-ip>` (`<moodle-host>`); the EHLO banner notes "(may be forged)" — the relay trusts campus source IPs.
 - `mdl_config` rows `smtpuser`/`smtppass` are **empty**; `smtphosts=<smtp-host>:587`, `smtpauthtype=LOGIN` are vestigial — credentials are NOT needed.
 - No PHP `sockets` extension, but `stream_socket_client` works.
-- **Sender identity:** use `<staff-email>` (Admin User, uid 2) as the From address — a real same-domain campus mailbox. "<Instructor-Name>" the student (cs1302a_26a, uid 3) = `<student-email>`.
+- **Sender identity:** use `<staff-email>` (Admin User, uid 2) as the From address — a real same-domain campus mailbox. "<Instructor-Name>" the student (<coursecode>, uid 3) = `<student-email>`.
 - Success = `250 2.0.0 <queueid> Message accepted for delivery` on the DATA end.
 
 ## Quick send (working)
@@ -45,14 +45,14 @@ php .../scripts/send_email.php <student-email> "hi" "hi"
 
 1. `stream_socket_client("tcp://<smtp-host>:587", $err, $errstr, 10)`; `stream_set_timeout($conn, 15)`.
 2. Read a reply by looping `fgets` until a line whose **4th character is a space** (`250-…` = more lines, `250 …` = end of reply).
-3. Send: greeting → `EHLO cs1302a.cityu.local` → `MAIL FROM:<from>` (expect `250`) → `RCPT TO:<to>` (expect `250`) → `DATA` (expect `354`) → headers + body + `\r\n.\r\n` (expect `250 2.0.0`) → `QUIT`.
+3. Send: greeting → `EHLO <coursecode>.cityu.local` → `MAIL FROM:<from>` (expect `250`) → `RCPT TO:<to>` (expect `250`) → `DATA` (expect `354`) → headers + body + `\r\n.\r\n` (expect `250 2.0.0`) → `QUIT`.
 4. Headers: `From`, `To`, `Subject`, `Message-ID` (uniqid), `Date: date('r')`, `MIME-Version: 1.0`, `Content-Type: text/plain; charset=UTF-8`.
 5. **Dot-stuffing:** any body line starting with `.` must be prefixed with an extra `.` before sending.
 
 ## Student-facing quiz email tone (user-set, 2026-10-05)
 For quiz non-submission / missed-deadline emails to students: **firm — no sympathy for technical issues and NO mitigation offered regardless of reason** (students are responsible for submitting before the deadline). Content: (a) state plainly what is missing + the exact close time, (b) no submission will be accepted after the closing time, (c) emphasize the E-Quiz is open for a one-week window → important to attempt and submit early. The user explicitly rejected a softer draft ("If you encountered any issue … please let me know and I will look into it") on these grounds — don't re-offer it.
 
-**Learning-concern / suspected-AI-misuse emails (different register, user-set 2026-10-06):** NOT firm-no-mitigation — supportive, zero accusation, no grade changes by email. Structure: (a) acknowledge the student's reported technical issue and briefly state in plain language what the system records actually show (no log details, no IDs); (b) state the observed pattern (high homework vs low in-class, incl. not being able to redo questions they "already solved"); (c) frame as a learning risk, not a judgment — AI is allowed but answers must show understanding; AI bug-free solutions skip the debugging/learning process; (d) the principle the user wants stated: **more help does not mean better learning — help can backfire**; use AI as a teacher, not a writer (explain why, quiz, point at bugs instead of rewriting); (e) invite to talk — Monday open hour or after the Wednesday 9am-12pm lecture (CS1302A: lecture Wed 9am-12pm, open hour Monday).
+**Learning-concern / suspected-AI-misuse emails (different register, user-set 2026-10-06):** NOT firm-no-mitigation — supportive, zero accusation, no grade changes by email. Structure: (a) acknowledge the student's reported technical issue and briefly state in plain language what the system records actually show (no log details, no IDs); (b) state the observed pattern (high homework vs low in-class, incl. not being able to redo questions they "already solved"); (c) frame as a learning risk, not a judgment — AI is allowed but answers must show understanding; AI bug-free solutions skip the debugging/learning process; (d) the principle the user wants stated: **more help does not mean better learning — help can backfire**; use AI as a teacher, not a writer (explain why, quiz, point at bugs instead of rewriting); (e) invite to talk — Monday open hour or after the Wednesday 9am-12pm lecture (<coursecode>: lecture Wed 9am-12pm, open hour Monday).
 
 ## Pitfalls
 

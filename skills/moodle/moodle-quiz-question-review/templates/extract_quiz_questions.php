@@ -1,4 +1,8 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 /**
  * Extract a quiz's full question data to JSON for the review pipeline.
  * (Templates: /tmp/mock_midterms_data.json + /tmp/mock_cr_extra.json)
@@ -13,13 +17,13 @@
  *  - ordering correct order: mdl_question_answers.fraction = position (1..N)
  *
  * Usage: edit $quizdefs below, then
- *   cd /var/www/moodledata/.hermes && timeout 120 php -d display_errors=1 /tmp/extract_quiz_questions.php
+ *   cd <datadir>/.hermes && timeout 120 php -d display_errors=1 /tmp/extract_quiz_questions.php
  */
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php'); require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php'); require_once($WEBROOT.'/lib/setup.php');
 global $DB;
 
-// ===== EDIT ME: quizid => label (course 3 = cs1302a_26a on this box) =====
+// ===== EDIT ME: quizid => label (course 3 = <coursecode> on this box) =====
 $quizdefs = [
     47 => 'Midterm', 48 => 'Midterm (makeup)',
     49 => 'Mock Midterm (25A)', 50 => 'Mock Midterm (24A)', 51 => 'Mock Midterm (23A)',

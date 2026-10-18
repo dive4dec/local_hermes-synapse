@@ -74,7 +74,7 @@ Write a PHP mysqli script and execute it.
 ### Step 3: Purge caches
 
 ```bash
-cd /var/www/html/public && moosh -n cache-clear
+cd <webroot> && moosh -n cache-clear
 ```
 
 ### Step 4: Verify
@@ -97,29 +97,29 @@ SELECT cm.id AS cmid, l.intro
 FROM mdl_course_modules cm
 JOIN mdl_label l ON l.id = cm.instance
 WHERE cm.course = <courseid>
-  AND l.intro LIKE '%cs1302_25b%';  -- whatever old course slug
+  AND l.intro LIKE '%<course>_25b%';  -- whatever old course slug
 ```
 
 ### Step 2: Replace embedded paths
 
 Read the `intro` column, apply `str_replace()` for each old→new slug pair, write back via mysqli. Common replacements:
-- Hub route: `cs1302_25b` → `cs1302a_26a`
-- JupyterBook: `cs1302i25b` → `cs1302ai26a`
-- GitHub repo: `cs1302_25b` → `cs1302a_26a`
+- Hub route: `<course>_25b` → `<coursecode>`
+- JupyterBook: `<course>i25b` → `<coursecode>i26a`
+- GitHub repo: `<course>_25b` → `<coursecode>`
 
 URL-encoded content (`%3A`, `%2F`) is still text-searchable — `LIKE` matches inside encoded hrefs.
 
 ### Canvas LTI wrapper URLs with embedded course IDs
 
 Jupyter notebook links are often wrapped through Canvas LTI:
-`https://canvas.<domain>/courses/67308/external_tools/retrieve?display=borderless&url=...cs1302_25b/hub/lti/launch...`. Both the **Canvas course ID** (`67308`) and the **JupyterHub course slug** (`cs1302_25b`) must be replaced. Find them:
+`https://canvas.<domain>/courses/67308/external_tools/retrieve?display=borderless&url=...<course>_25b/hub/lti/launch...`. Both the **Canvas course ID** (`67308`) and the **JupyterHub course slug** (`<course>_25b`) must be replaced. Find them:
 
 ```sql
 SELECT cm.id AS cmid, l.intro
 FROM mdl_course_modules cm
 JOIN mdl_label l ON l.id = cm.instance
 WHERE cm.course = <courseid>
-  AND l.intro LIKE '%cs1302_25b%'
+  AND l.intro LIKE '%<course>_25b%'
   AND l.intro LIKE '%ipynb%';
 ```
 

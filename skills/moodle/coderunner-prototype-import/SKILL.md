@@ -7,7 +7,7 @@ description: "Fixes missing Code Runner prototype errors by importing prototype 
 
 ## When to use this skill
 
-Trigger when Code Runner questions show: *"Broken question (missing or duplicate prototype 'python3_CS1302_prototype'). Cannot be run."*
+Trigger when Code Runner questions show: *"Broken question (missing or duplicate prototype 'python3_<course>_prototype'). Cannot be run."*
 
 This happens when:
 - A `--template` backup was used (excludes system-level prototypes)
@@ -46,7 +46,7 @@ A naive `INSERT INTO mdl_question` only creates the question row but misses `que
 
 ## Fix: Complete SQL Insert via `moosh sql-run`
 
-All commands use `moosh -p /var/www/html/public -n sql-run "..."`.
+All commands use `moosh -p <webroot> -n sql-run "..."`.
 
 ### Step 1: Delete any stale placeholder
 
@@ -65,7 +65,7 @@ moosh sql-run "
 INSERT INTO mdl_question (parent, name, questiontext, questiontextformat,
   generalfeedback, generalfeedbackformat, defaultmark, penalty, qtype, length,
   stamp, timecreated, timemodified, createdby, modifiedby)
-VALUES (0, 'python3_CS1302_prototype', '# Prototype of python3 for CS1302', 0,
+VALUES (0, 'python3_<course>_prototype', '# Prototype of python3 for <course>', 0,
   '', 0, 1, 0, 'coderunner', 1, 'manual-$(date +%s)', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), 2, 2)
 "
 ```
@@ -89,7 +89,7 @@ INSERT INTO mdl_question_coderunner_options (questionid, coderunnertype, prototy
   extractcodefromjson, templateparamslang, templateparamsevalpertry, templateparamsevald,
   twigall, uiplugin, attachments, attachmentsrequired, maxfilesize, displayfeedback,
   giveupallowed)
-VALUES (NEW_QUESTION_ID, 'python3_CS1302_prototype', 1, 0, 0, 2, 0, 18, 100, '# YOUR CODE HERE',
+VALUES (NEW_QUESTION_ID, 'python3_<course>_prototype', 1, 0, 0, 2, 0, 18, 100, '# YOUR CODE HERE',
   1, '10, 20, ...', 1, 'YOUR_TEMPLATE_HERE', 1, 0,
   '|YOUR_TEST_SPLITTER|ms', 'python3', 'EqualityGrader', 1, 1, 'None', 0, '{}',
   0, 'ace', 0, 0, 10240, 1, 0)
@@ -137,7 +137,7 @@ VALUES (4274, 0, 'test_code', 'stdin_text', 'expected_output', 1, 'SHOW', 0, 1)
 moosh php-eval "
 \$coursectx = context_course::instance(COURSE_ID);
 \$qtype = new qtype_coderunner();
-echo var_export(\$qtype->get_prototype('python3_CS1302_prototype', \$coursectx, true), true);
+echo var_export(\$qtype->get_prototype('python3_<course>_prototype', \$coursectx, true), true);
 "
 ```
 
@@ -157,7 +157,7 @@ WHERE qv.version = (SELECT MAX(v.version) FROM mdl_question_versions v
   WHERE be.id = qbe.id)
 AND qco.prototypetype != 0
 AND qc.contextid IN (1, 12)
-AND qco.coderunnertype = 'python3_CS1302_prototype'
+AND qco.coderunnertype = 'python3_<course>_prototype'
 "
 ```
 
@@ -192,7 +192,7 @@ moosh sql-run "UPDATE mdl_question_categories SET contextid = SEARCHED_CONTEXT_I
 
 ### Why course-level prototypes still work
 
-In Moodle 5.2+, each course may have question bank activity instances whose contexts **do** appear in the search list. The course-level context (e.g., contextid=18 for cs1302_25b) often IS in the list because it's the context of the default question bank. But a fresh course may only have context IDs like 609, 616, etc. — so always verify.
+In Moodle 5.2+, each course may have question bank activity instances whose contexts **do** appear in the search list. The course-level context (e.g., contextid=18 for <course>_25b) often IS in the list because it's the context of the default question bank. But a fresh course may only have context IDs like 609, 616, etc. — so always verify.
 
 ### No conflict between same-named prototypes in different courses
 

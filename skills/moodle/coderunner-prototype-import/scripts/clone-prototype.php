@@ -1,18 +1,22 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 /**
  * Clone a Code Runner prototype from one course to another.
  *
  * Usage: php clone-prototype.php SOURCE_QUESTION_ID TARGET_CONTEXTID TARGET_PARENT_CAT
  *
  * Example: php clone-prototype.php 4281 609 179
- *   - Copy prototype Q4281 to cs1302a_26a (contextid=609, top category=179)
+ *   - Copy prototype Q4281 to <coursecode> (contextid=609, top category=179)
  *
  * This script correctly handles the 4-table relationship:
  *   mdl_question_categories → mdl_question_bank_entries → mdl_question_versions → mdl_question
  * With separate auto-incremented IDs for question and entry (a common mistake is forcing them equal).
  */
 define('CLI_SCRIPT', true);
-require_once('/var/www/html/public/config.php');
+require_once($WEBROOT.'/config.php');
 
 $sourceQid = (int)($argv[1] ?? 0);
 $targetContextid = (int)($argv[2] ?? 0);

@@ -37,7 +37,7 @@ One PHP script (pattern in `moodle-db-access`) that writes every label intro, pa
 Run these classes of checks and record outliers:
 
 1. **Copy-paste errors** — forum/assignment/label intros that mention the wrong assessment (e.g. "Project FAQ" intro still saying "Clarifications for CE-Quiz"; a "(copy)" label left in a section).
-2. **Broken links** — every `href` in content: `mod/resource/view.php?id=N` → verify `mdl_resource.id=N` exists IN THIS COURSE (course-relative `../` links resolve to the course dir). Absolute URLs → `curl -sk -o /dev/null -w '%{http_code}'` — remember the site base path `/cs1302a-eq` (bare root paths 404).
+2. **Broken links** — every `href` in content: `mod/resource/view.php?id=N` → verify `mdl_resource.id=N` exists IN THIS COURSE (course-relative `../` links resolve to the course dir). Absolute URLs → `curl -sk -o /dev/null -w '%{http_code}'` — remember the site base path `/<course-code>` (bare root paths 404).
 3. **Date/time consistency** — announcement times vs quiz `timeopen`/`timeclose` (e.g. welcome post "18:30-19:30" vs quiz window ending 19:45); verify weekdays with `date -d <ts> +%A`; midterm lock labels ("locked until X") vs quiz timeopen.
 4. **Schedule vs grouping** — CE-Quiz group overrides must match the lab-section schedule (see `moodle-cequiz-schedule-propagation`); groups present in the Teaching Team label vs groups that actually have overrides (orphan groups = e.g. a T03 with no overrides).
 5. **Dangling deleted-group refs** — `groupings_groups` rows whose `groupid` has no `groups` row (harmless but messy; show per-grouping counts).

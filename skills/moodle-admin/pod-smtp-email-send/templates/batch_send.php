@@ -54,7 +54,7 @@ foreach ($recipients as $i => $r) {
     "From: $fromName <$from>",
     "To: $toName <$to>",
     "Subject: $subjectB64",
-    'Message-ID: <'.uniqid('cs1302a',true).'@cs1302a.<domain>>',
+    'Message-ID: <'.uniqid('<coursecode>',true).'@<coursecode>.<domain>>',
     'Date: '.date('r'),
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=UTF-8',
@@ -70,7 +70,7 @@ foreach ($recipients as $i => $r) {
       if (!$c) { throw new Exception("CONNECT FAIL: $es"); }
       stream_set_timeout($c,15);
       readReply($c);
-      if (!ok(cmd($c,'EHLO cs1302a.cityu.local'),'250')) throw new Exception('EHLO fail');
+      if (!ok(cmd($c,'EHLO <coursecode>.cityu.local'),'250')) throw new Exception('EHLO fail');
       if (!ok(cmd($c,"MAIL FROM:<$from>"),'250'))   throw new Exception('MAIL fail');
       if (!ok(cmd($c,"RCPT TO:<$to>"),'250'))       throw new Exception('RCPT fail (likely 550/unknown addr)');
       if (!ok(cmd($c,'DATA'),'354'))                 throw new Exception('DATA fail');

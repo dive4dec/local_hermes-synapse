@@ -1,6 +1,6 @@
 ---
 name: quiz-sampling-consequence
-description: "Pipeline for quiz sampling-for-explanation consequences in cs1302a_26a. A student absent when sampled (whole quiz zero) or present but failed to explain one question (that question zeroed) — verify attempts, zero via manual grade with audit comment, recompute grades, send the user's short FINAL no-mitigation notice email. Use for 'mark zero', 'zero the absentees', 'mark question N as 0', 'failed to explain question X', or emailing students about such grade changes."
+description: "Pipeline for quiz sampling-for-explanation consequences in <coursecode>. A student absent when sampled (whole quiz zero) or present but failed to explain one question (that question zeroed) — verify attempts, zero via manual grade with audit comment, recompute grades, send the user's short FINAL no-mitigation notice email. Use for 'mark zero', 'zero the absentees', 'mark question N as 0', 'failed to explain question X', or emailing students about such grade changes."
 ---
 
 # Quiz sampling consequence (zero + final notice)
@@ -18,7 +18,7 @@ resources to support mitigation." Do NOT draft the "come and explain" variant
 even if another skill or an earlier email in /tmp suggests it. Also: no
 AI-misuse / expulsion / learning-concern framing in these notices — no
 accusation without decisive evidence; the heavier instruments (formal warning
-with expulsion language, TSO-style conversation email) are separate things the
+with expulsion language, expulsion-style conversation email) are separate things the
 user commissions explicitly with their own template.
 
 Approved email shape (short, factual, final):
@@ -34,7 +34,7 @@ opportunity for this quiz.
 
 Regards,
 <Instructor-Name>
-CS1302A Intro to Computer Programming
+<coursecode> Intro to Computer Programming
 ```
 Single-question variant: line 2 = "…you were asked to explain Question N
 (<question name>), but were not able to do so."; consequence = "the mark for

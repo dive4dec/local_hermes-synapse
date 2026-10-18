@@ -1,12 +1,16 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 // Jobe health probe — run from the Moodle pod:
-//   cd /var/www/moodledata/.hermes && timeout 300 php skills/moodle/quiz-integrity-deep-dive/scripts/jobe_probe.php
+//   cd <datadir>/.hermes && timeout 300 php skills/moodle/quiz-integrity-deep-dive/scripts/jobe_probe.php
 // Tests: trivial script, big loop, infinite loop (must be killed ~5-6s), and
 // 12 concurrent infinite-loop jobs (must all return, ~8s wall). Read-only.
 define('CLI_SCRIPT', true);
 define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php');
+require_once($WEBROOT.'/lib/setup.php');
 $host = get_config('qtype_coderunner', 'jobe_host');
 $apikey = get_config('qtype_coderunner', 'jobe_apikey');
 echo "jobe_host=$host\n";

@@ -105,7 +105,7 @@ No enrollment → no access, regardless of quiz settings.
 
 - **Compare ALL `review*` fields** — there are more than the commonly-checked `reviewattempt`/`reviewcorrectness`/`reviewgeneralfeedback`. Fields like `reviewmaxmarks`, `reviewmarks`, `reviewrightanswer`, and `reviewspecificfeedback` are often missed.
 - **Never copy `timeopen`/`timeclose` timestamps blindly** from old quizzes — they will be stale dates from a previous semester. Set to `0` (always open) unless specific times are needed.
-- **Always purge cache** after any DB change before telling the user it's done: `cd /var/www/html/public && moosh -n cache-clear`.
+- **Always purge cache** after any DB change before telling the user it's done: `cd <webroot> && moosh -n cache-clear`.
 - **`$DB->get_records('quiz_overrides', ...)` can fail** with "Error reading from database" in CLI bootstrap. Workaround: fetch all with `get_records('quiz_overrides')` (no filter) and filter in PHP.
 
 ## Course content management
@@ -119,7 +119,7 @@ When bulk-renaming or updating course content (labels, quiz titles, contact info
 
 ## Lab/lecture schedule reference
 
-Lab and lecture section assignments are stored in the Obsidian vault at `/var/www/moodledata/.hermes/obsidian-vault/CS1302A.Weekly.Lab.Schedule.md`. Always consult this file when updating course Contact labels or CE-Quiz group overrides — it is the source of truth for section-to-lecturer mapping.
+Lab and lecture section assignments are stored in the Obsidian vault at `<datadir>/.hermes/obsidian-vault/<coursecode>.Weekly.Lab.Schedule.md`. Always consult this file when updating course Contact labels or CE-Quiz group overrides — it is the source of truth for section-to-lecturer mapping.
 
 ## PHP bootstrap
 

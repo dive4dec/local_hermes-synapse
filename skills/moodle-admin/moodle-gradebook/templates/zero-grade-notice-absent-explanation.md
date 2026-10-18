@@ -30,7 +30,7 @@ Since no explanation was given, the mark for E-Quiz <N> (your recorded score was
 
 Regards,
 <Instructor-Name>
-CS1302A Intro to Computer Programming
+<coursecode> Intro to Computer Programming
 
 ---
 

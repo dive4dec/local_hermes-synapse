@@ -63,7 +63,7 @@ Real case: a student with **96 Prechecks (44 iterations on one debugging questio
    require('<your_moodle_root>/config.php');
    require_once('<your_moodle_root>/lib/setup.php');
    ```
-   (In the source deployment: moodle root `/var/www/html/public`, hermes home `/var/www/moodledata/.hermes`.)
+   (In the source deployment: moodle root `<webroot>`, hermes home `<datadir>/.hermes`.)
 7. If a DB tool is available, prefer it for quick schema probes (`information_schema.columns`, `table_schema = DATABASE()`) and for confirming a table exists before joining it.
 
 ## Audit procedure

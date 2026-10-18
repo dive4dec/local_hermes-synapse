@@ -2,7 +2,7 @@
 
 Verified 2026-08-28 from code (`completion/classes/form/form_trait.php`,
 `lib/completionlib.php`, `mod/quiz/lib.php`, `mod/quiz/classes/completion/custom_completion.php`)
-+ live DB. Reference config: **Mock Midterm (25B), cs1302a_26a (course 3), cm 217** —
++ live DB. Reference config: **Mock Midterm (25B), <coursecode> (course <cid>), cm 217** —
 `completion=2`, `completiongradeitemnumber=0`, `completionpassgrade=1`, grade item gradepass=6/20.
 
 ## UI → DB mapping (single-grade-item activities, i.e. quiz)
@@ -27,22 +27,22 @@ when `completionattemptsexhausted = 1` (then cm customdata gets
 Standard per user: **Mock Exams** pass 30/100; **Mock Midterms** pass 6/20; all should be
 auto-completed via Receiving a grade + Receiving a passing grade.
 
-- **cs1302a_26a (3):** Mock Exams cm 111–116, 218 — flags missing, gradepass already 30.
+- **<coursecode> (3):** Mock Exams cm 111–116, 218 — flags missing, gradepass already 30.
   Mock Midterms cm 133 (gradepass 6, flags missing), 134–138 (gradepass **0 → 6** + flags).
   cm 217 (25B midterm) = correct reference.
-- **cs1302_26a (7):** all Mock Exams cm 637–643 and Mock Midterms cm 624–630 — flags missing;
+- **<other-coursecode> (7):** all Mock Exams cm 637–643 and Mock Midterms cm 624–630 — flags missing;
   midterm gradepass 0→6 on cm 625–629 (25A/25B already 6).
-- **Anomaly:** Mock Exam (25B) in course 7 (cm 637) has quiz max grade 0 (gi 228).
+- **Anomaly:** Mock Exam (25B) in course <other-coursecid> (cm 637) has quiz max grade 0 (gi 228).
 - **Legacy "Mock Exam/Midterm 2020–2025" have NO grade items** → cannot support pass-grade
   completion at all.
-- **Duplicate CMs in course 3** (cloning leftovers): 25B midterm cm 153 (completion=1) & 217 (completion=2);
+- **Duplicate CMs in course <cid>** (cloning leftovers): 25B midterm cm 153 (completion=1) & 217 (completion=2);
   25B exam cm 154 (completion=0) & 218 (completion=2); 23A midterm cm 102 (completion=0) & 135 (completion=2).
   Always list cm + `cm.visible` before bulk edits to scope to the live CM.
 - Availability rules: checked 2026-08-28 — NO availability conditions in courses 3/7 reference these Mock cmids.
 
-**Status (2026-08-28, RESOLVED):** Course 3 (cs1302a_26a) — all 13 rows APPLIED and verified
+**Status (2026-08-28, RESOLVED):** Course 3 (<coursecode>) — all 13 rows APPLIED and verified
 through the real completion engine (see "Verify with the real engine" below); pre-change backup
-at `/tmp/mock_completion_backup_20260828_134450.json`. Course 7 (cs1302_26a) — **NOT applied**:
+at `/tmp/mock_completion_backup_20260828_134450.json`. Course 7 (<other-coursecode>) — **NOT applied**:
 user chose to delete the whole course instead (delete still pending — it has 3 active
 enrolments, 6 quiz attempts, 110 CMs; soft vs hard not yet chosen). Duplicates + legacy
 2020–2025 mocks were left alone per user. Re-check live state before any course-7 or duplicate
@@ -53,7 +53,7 @@ work in a later session.
 1. Back up the affected rows (SELECT * for the cmids + grade item ids → /tmp file).
 2. Direct SQL: `UPDATE mdl_course_modules SET completiongradeitemnumber=0, completionpassgrade=1 WHERE id IN (...)`;
    `UPDATE mdl_grade_items SET gradepass=6.00000 WHERE id IN (...)`.
-3. `cd /var/www/html/public && moosh -n cache-clear` (+ `core_coursemodinfo` purge — completion
+3. `cd <webroot> && moosh -n cache-clear` (+ `core_coursemodinfo` purge — completion
    state is served through the cm info cache).
 4. **Verify in the UI**: open each quiz's Activity completion form (checkbox + sub-option rendered)
    and one grade report for a test user (a failing-score student should show the pass rule incomplete).
@@ -86,7 +86,7 @@ quiz page message: `mod/quiz/view.php` prints "Grade to pass: X out of Y" whenev
 ## Pitfalls
 
 - **CM id ≠ quiz id, differs per course** — echo the activity name inside the applying script.
-- Duplicate CMs for the same quiz instance (course 3): scope by visible CM id, never by quiz id alone.
+- Duplicate CMs for the same quiz instance (course <cid>): scope by visible CM id, never by quiz id alone.
 - Legacy mocks without grade items: if `completiongradeitemnumber` is set with no grade item,
   the form's "Receiving a grade" may display checked but evaluation can never complete.
 - `gradepass` is part of the grade item definition — changing it affects the grade report (P/F

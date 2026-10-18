@@ -24,7 +24,7 @@ Diagnose and fix Safe Exam Browser access failures for Moodle quizzes.
 
 ## SEB Plugin Location
 
-`/var/www/html/public/mod/quiz/accessrule/seb/`
+`<webroot>/mod/quiz/accessrule/seb/`
 
 ## Common Error: "Invalid SEB config key"
 
@@ -76,4 +76,4 @@ $logs = $DB->get_records('logstore_standard_log',
 - Multiple users with the same name exist as separate accounts (check user id, not just name)
 - `mdl_quiz` has no SEB columns — settings are in `quizaccess_seb_quizsettings`
 - The `showseblinks` global config controls which buttons appear: `seb` = Launch SEB button, `http` = Download config button
-- **Do not deduce a campus/lab IP range from a single observed IP.** A single address (e.g. `175.159.202.4`) proves nothing about the subnet; on this site the logstore only ever showed that ONE `175.159.*` address, so the valid lab range must come from the lab's network docs, not from logs. `175.159.*` is not within `MOODLE_AUDIT_CAMPUS_IPS` (10/8, 144.214/16, 172.16/12), so audits flag it non-campus until the user adds the lab's real CIDR(s) to `.env`.
+- **Do not deduce a campus/lab IP range from a single observed IP.** A single address (e.g. `<lab-ip>`) proves nothing about the subnet; on this site the logstore only ever showed that ONE `175.159.*` address, so the valid lab range must come from the lab's network docs, not from logs. `175.159.*` is not within `MOODLE_AUDIT_CAMPUS_IPS` (10/8, 144.214/16, 172.16/12), so audits flag it non-campus until the user adds the lab's real CIDR(s) to `.env`.

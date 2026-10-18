@@ -1,6 +1,6 @@
 # Sender identity binding — how the agent's "current" Moodle user is resolved, and how to fix drift
 
-Incident (2026-09-24): an urgent grade message to a student in cs1302a_26a was delivered
+Incident (2026-09-24): an urgent grade message to a student in <coursecode> was delivered
 "from <Staff-Zhao> (uid 495)" instead of the room owner <Instructor-Name> (uid 494). User correction:
 "Strange, this agent should be bound to the account <Instructor-Name>." The message had already
 been sent, so it was re-attributed in place. This file captures the mechanism + both recipes.
@@ -12,7 +12,7 @@ been sent, so it was re-attributed in place. This file captures the mechanism + 
      JSON `{"username": "<lti username>", "userid": "<uid>"}`. The Matrix DM session key
      looks like `agent:main:matrix:dm:!<roomid>:matrix.org`.
   2. **Fallback:** `$HERMES_HOME/.moodle_identity` (same JSON) — **last-writer-wins**.
-- The ACP bridge (`/var/www/html/public/local/hermesagent/classes/bridge/acp_bridge.py`,
+- The ACP bridge (`<webroot>/local/hermesagent/classes/bridge/acp_bridge.py`,
   `_write_identity()`) rewrites BOTH files on every prompt coming from a Moodle LTI chat,
   stamped with that chat's LTI user. Consequence: the last teacher to chat with the agent
   via the Moodle UI owns the legacy file, and any session without a per-session file
@@ -21,12 +21,12 @@ been sent, so it was re-attributed in place. This file captures the mechanism + 
   fallback governed.
 - `moodle_get_my_courses` returns whichever account is currently bound — the 1-call detector.
 
-## Who is who (course 3, cs1302a_26a — verify against DB before relying)
+## Who is who (course <cid>, <coursecode> — verify against DB before relying)
 
 - **<Instructor-Name> — uid 494**, LTI username `enrol_lti3362f10548e1f10d602bdbe336bed8b4dd080fef`.
-  Owner of the Matrix room "EQuiz cs1302a-26a" — the expected bound account.
+  Owner of the Matrix room "EQuiz <coursecode>-26a" — the expected bound account.
 - **<Staff-Zhao> — uid 495**, LTI username `enrol_lti34461258b45ef7082df58c61d76610bd0e62b159`
-  (also editingteacher on course 3).
+  (also editingteacher on course <cid>).
 - Both hold editingteacher; the role does NOT identify the owner. Compare against the
   room owner, not against "the teacher I remember".
 
@@ -59,7 +59,7 @@ needs no change:
 
 ```php
 define('CLI_SCRIPT', true); define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php'); require_once('/var/www/html/public/lib/setup.php');
+require('<webroot>/config.php'); require_once('<webroot>/lib/setup.php');
 global $DB, $PAGE;
 $NID = <mdl_notifications.id>; $NEWFROM = <owner uid>; $USERTO = <recipient uid>;
 $DB->set_field('notifications', 'useridfrom', $NEWFROM, ['id' => $NID]);

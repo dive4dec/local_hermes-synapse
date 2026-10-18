@@ -73,8 +73,8 @@ context_module::instance($cmid, true);
 ### Step 7: Purge cache (both required)
 
 ```bash
-rm -rf /var/www/moodledata/cache/local_file/core_coursemodinfo/{courseid}-c-cache/
-cd /var/www/html/public && moosh -n cache-clear
+rm -rf <datadir>/cache/local_file/core_coursemodinfo/{courseid}-c-cache/
+cd <webroot> && moosh -n cache-clear
 ```
 
 ## Forum-specific field reference
@@ -114,10 +114,10 @@ $cm->groupingid = 25;            // restrict to a grouping
 
 ## Pitfalls
 
-- **`course_modules.section` must be `course_sections.id`** (NOT the section number). For example, section number 1 in course 7 has `id=89`, so use `89`. Moodle's integrity check will fail if this is wrong.
+- **`course_modules.section` must be `course_sections.id`** (NOT the section number). For example, section number 1 in course <other-coursecid> has `id=<helpergid>`, so use `89`. Moodle's integrity check will fail if this is wrong.
 - **`course_sections.sequence` must include the new CM id**, or the activity won't render in the UI even though it exists in the DB. Append it: `$section->sequence = $section->sequence . ',' . $cmid`.
 - **Context must be created explicitly**: `context_module::instance($cmid, true)` — without it, capabilities and permissions won't work.
-- **`moosh -n cache-clear` alone is insufficient**. You must also delete the file cache: `rm -rf /var/www/moodledata/cache/local_file/core_coursemodinfo/{courseid}-c-cache/`.
+- **`moosh -n cache-clear` alone is insufficient**. You must also delete the file cache: `rm -rf <datadir>/cache/local_file/core_coursemodinfo/{courseid}-c-cache/`.
 - **`insert_record` may return an existing ID** if the autoincrement counter wrapped. Verify by querying the returned ID — if it has pre-existing data, the ID was reused.
 - **Stale CMs from failed attempts.** A failed `moosh activity-add` leaves orphaned `course_modules` records. Check for duplicates if the user sees wrong content.
 - **When copying forum discussions between courses**, update `forum_discussions.firstpost` to point to the NEW post IDs. Moodle's SQL does `JOIN {forum_posts} ON fp.id = d.firstpost` — if `firstpost=0`, the discussion is silently filtered out. Also set `usermodified` to a valid user id.

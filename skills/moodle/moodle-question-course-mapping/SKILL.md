@@ -39,7 +39,7 @@ WHERE q.qtype = 'coderunner'
 Or by contextid directly (more reliable):
 
 ```sql
--- Replace with the course's contextid (e.g. 18 for cs1302_25b, 609 for cs1302a_26a)
+-- Replace with the course's contextid (e.g. 18 for <course>_25b, 609 for <coursecode>)
 SELECT q.id, q.name, qc.name
 FROM mdl_question q
 JOIN mdl_question_versions qv ON qv.questionid = q.id
@@ -57,8 +57,8 @@ WHERE contextlevel = 70 AND instanceid = <course_id>
 ```
 
 Known contextids:
-- cs1302_25b (course id=2): contextid=18
-- cs1302a_26a (course id=3): contextid=609
+- <course>_25b (course id=2): contextid=18
+- <coursecode> (course id=3): contextid=609
 
 ## Pitfalls
 

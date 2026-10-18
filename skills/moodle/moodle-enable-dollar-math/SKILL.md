@@ -18,14 +18,14 @@ Moodle 5.x defaults MathJax 4 to only support `\( ... \)` for inline math and `$
 Set `mathjaxconfig` in `mdl_config_plugins` to tell MathJax 4 to accept `$...$`:
 
 ```bash
-moosh -p /var/www/html/public -n sql-run \
+moosh -p <webroot> -n sql-run \
 "UPDATE mdl_config_plugins SET value = '{\"tex\": {\"inlineMath\": [[\"$\", \"$\"], [\"\\\\\\\\(\", \"\\\\\\\\)\"]]}}'
  WHERE plugin = 'filter_mathjaxloader' AND name = 'mathjaxconfig'"
 ```
 
 Then clear cache:
 ```bash
-moosh -p /var/www/html/public -n cache-clear
+moosh -p <webroot> -n cache-clear
 ```
 
 ## How it works
@@ -38,9 +38,9 @@ moosh -p /var/www/html/public -n cache-clear
 ## Reverting
 
 ```bash
-moosh -p /var/www/html/public -n sql-run \
+moosh -p <webroot> -n sql-run \
 "UPDATE mdl_config_plugins SET value = '' WHERE plugin = 'filter_mathjaxloader' AND name = 'mathjaxconfig'"
-moosh -p /var/www/html/public -n cache-clear
+moosh -p <webroot> -n cache-clear
 ```
 
 ## Pitfalls

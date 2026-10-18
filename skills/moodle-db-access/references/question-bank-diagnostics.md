@@ -1,8 +1,8 @@
-# cs1302_25b Question Bank Diagnostic (2026-07-26)
+# <course>_25b Question Bank Diagnostic (2026-07-26)
 
 ## Context structure discovered
 
-Course `cs1302_25b` (course id=2) contexts:
+Course `<course>_25b` (course id=2) contexts:
 - `id=5`: contextlevel=30 (category), instanceid=2, path=/1/5
 - `id=7`: contextlevel=80 (block), instanceid=2, path=/1/7
 - `id=17`: contextlevel=50 (course), instanceid=2, path=/1/3/17

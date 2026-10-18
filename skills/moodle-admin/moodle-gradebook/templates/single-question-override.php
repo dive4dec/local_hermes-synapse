@@ -1,9 +1,13 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 // Single-question quiz manual override (mark + comment) — verified working 2026-10-01
-// (Jia Hao WANG u563, E-Quiz 3 quiz61 Q8 'short-circuit - function call' slot9 q3639,
+// (u563, E-Quiz 3 quiz61 Q8 'short-circuit - function call' slot9 q3639,
 //  1/1 -> 0; sumgrades 18.06667 -> 17.06667; gradebook 62.84059 -> 59.36233 = x80/23).
 //
-// Run:  cd /var/www/moodledata/.hermes && timeout 300 php -d display_errors=1 /tmp/single_q.php
+// Run:  cd <datadir>/.hermes && timeout 300 php -d display_errors=1 /tmp/single_q.php
 //
 // NO explicit DB transaction: on this build $DB->commit_transaction() and
 // $DB->rollback_transaction() are PROTECTED from global scope ("Call to protected
@@ -15,16 +19,16 @@
 //  pre-write crashes leave no partial state — but verify, don't assume.)
 define('CLI_SCRIPT', true);
 define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
-require_once('/var/www/html/public/question/engine/lib.php');
-require_once('/var/www/html/public/question/engine/datalib.php');
-require_once('/var/www/html/public/mod/quiz/locallib.php');
-require_once('/var/www/html/public/mod/quiz/classes/quiz_attempt.php');
+require($WEBROOT.'/config.php');
+require_once($WEBROOT.'/lib/setup.php');
+require_once($WEBROOT.'/question/engine/lib.php');
+require_once($WEBROOT.'/question/engine/datalib.php');
+require_once($WEBROOT.'/mod/quiz/locallib.php');
+require_once($WEBROOT.'/mod/quiz/classes/quiz_attempt.php');
 global $DB;
 
 // ---------------- EDIT THESE ----------------
-$COURSEID = 3;        // course id (cs1302a_26a)
+$COURSEID = getenv('MHS_COURSE_ID') ? (int)getenv('MHS_COURSE_ID') : 0;  // <cid> — set MHS_COURSE_ID (run mhs-setup) or edit
 $QUIZ     = 61;       // quiz id
 $ATTEMPT  = 16499;    // mdl_quiz_attempts.id of the finished attempt
 $SLOT     = 9;        // slot of the target question

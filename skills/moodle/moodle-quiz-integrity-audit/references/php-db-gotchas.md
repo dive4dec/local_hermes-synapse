@@ -1,6 +1,6 @@
 # PHP / DB gotchas on this box (verified during the CE-Quiz 1 integrity audit)
 
-Environment: phpfpm pod, PHP 8.3.33, MariaDB, run scripts as `cd /var/www/moodledata/.hermes && php -d display_errors=1 /tmp/xxx.php`. Bootstrap: `define('CLI_SCRIPT',true); define('MOODLE_INTERNAL',true); require('/var/www/html/public/config.php'); require_once('/var/www/html/public/lib/setup.php'); global $DB;`
+Environment: phpfpm pod, PHP 8.3.33, MariaDB, run scripts as `cd <datadir>/.hermes && php -d display_errors=1 /tmp/xxx.php`. Bootstrap: `define('CLI_SCRIPT',true); define('MOODLE_INTERNAL',true); require('<webroot>/config.php'); require_once('<webroot>/lib/setup.php'); global $DB;`
 
 ## 0) PREFER raw mysqli over the $DB layer for complex reads (verified 2026-10-05)
 The `$DB` layer (`get_records_sql`, and even the mysqli-backed get_records for some shapes) is **flaky** on exactly the queries this audit needs: multi-table JOINs, `ORDER BY`, `GROUP BY`, subqueries, wide column sets → "Error reading from database" or silently wrong/short rowsets. Raw `mysqli` hits the **same MariaDB** with **none** of that flakiness. The old belief that "raw mysqli fails with Access denied" was wrong — it fails only if you use hardcoded creds; source them from `$CFG`:

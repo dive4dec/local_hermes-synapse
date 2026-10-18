@@ -26,11 +26,11 @@ Enable debug mode temporarily and trigger an AI action via PHP:
 
 ```bash
 # Enable debug
-cd /var/www/html/public && moosh -n sql-run "UPDATE mdl_config SET value = 'E_ALL | E_STRICT' WHERE name = 'debug'"
-cd /var/www/html/public && moosh -n sql-run "UPDATE mdl_config SET value = '1' WHERE name = 'debugdisplay'"
+cd <webroot> && moosh -n sql-run "UPDATE mdl_config SET value = 'E_ALL | E_STRICT' WHERE name = 'debug'"
+cd <webroot> && moosh -n sql-run "UPDATE mdl_config SET value = '1' WHERE name = 'debugdisplay'"
 
 # Trigger a test summarize call
-cd /var/www/html/public && moosh -n php-eval "
+cd <webroot> && moosh -n php-eval "
 global \$DB;
 \$action = new core_ai\aiactions\summarise_text(
     contextid: 18,
@@ -51,8 +51,8 @@ Look for: `++ Blocked The URL is blocked. [user 2] ++`
 
 **Always revert debug mode afterward:**
 ```bash
-cd /var/www/html/public && moosh -n sql-run "UPDATE mdl_config SET value = '0' WHERE name = 'debug'"
-cd /var/www/html/public && moosh -n sql-run "UPDATE mdl_config SET value = '0' WHERE name = 'debugdisplay'"
+cd <webroot> && moosh -n sql-run "UPDATE mdl_config SET value = '0' WHERE name = 'debug'"
+cd <webroot> && moosh -n sql-run "UPDATE mdl_config SET value = '0' WHERE name = 'debugdisplay'"
 ```
 
 ## Fix: Allow the port
@@ -60,8 +60,8 @@ cd /var/www/html/public && moosh -n sql-run "UPDATE mdl_config SET value = '0' W
 Add the port to Moodle's allowed ports list:
 
 ```bash
-cd /var/www/html/public && moosh -n sql-run "UPDATE mdl_config SET value = '443\n80\n8000' WHERE name = 'curlsecurityallowedport'"
-cd /var/www/html/public && moosh -n php-eval "purge_all_caches();"
+cd <webroot> && moosh -n sql-run "UPDATE mdl_config SET value = '443\n80\n8000' WHERE name = 'curlsecurityallowedport'"
+cd <webroot> && moosh -n php-eval "purge_all_caches();"
 ```
 
 Or use the UI: **Site admin → Security → HTTP Security → Allowed ports**.
@@ -72,7 +72,7 @@ If the host resolves to a private IP and port isn't the issue, add the hostname 
 
 **Check current config:**
 ```bash
-cd /var/www/html/public && moosh -n php-eval "
+cd <webroot> && moosh -n php-eval "
 global \$CFG;
 echo 'Blocked hosts: ' . var_export(\$CFG->curlsecurityblockedhosts ?? '', true) . PHP_EOL;
 echo 'Allowed ports: ' . var_export(\$CFG->curlsecurityallowedport ?? '', true) . PHP_EOL;

@@ -1,4 +1,8 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 /**
  * Moodle quiz per-question (per-slot) completion status.
  *
@@ -10,8 +14,8 @@
  *   gave up    — terminal state gaveup/failed (reached it, abandoned, no answer)
  *   not reached— only `todo` steps so far (still on an earlier question / mid-attempt)
  *
- * ENVIRONMENT ASSUMPTIONS (verified cs1302a_26a / Moodle 5.2 fork, 2026-09-14):
- *  - webroot /var/www/html/public, run as www-data (cd /var/www/moodledata/.hermes first).
+ * ENVIRONMENT ASSUMPTIONS (verified <coursecode> / Moodle 5.2 fork, 2026-09-14):
+ *  - webroot <webroot>, run as www-data (cd <datadir>/.hermes first).
  *  - quiz_attempts.uniqueid == question_usages.id  (the attempt->usage link).
  *  - question_attempts.questionusageid + .slot + .questionid.
  *  - question_attempt_steps.questionattemptid == question_attempts.id; state column is `state`
@@ -20,8 +24,8 @@
  */
 define('CLI_SCRIPT', true);
 define('MOODLE_INTERNAL', true);
-require('/var/www/html/public/config.php');
-require_once('/var/www/html/public/lib/setup.php');
+require($WEBROOT.'/config.php');
+require_once($WEBROOT.'/lib/setup.php');
 global $DB;
 
 if ($argc < 3) {

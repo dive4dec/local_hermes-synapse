@@ -1,8 +1,12 @@
 <?php
+// Portable params (see skills/_conventions/PORTABLE.md). Override via env; defaults match a standard layout.
+$WEBROOT  = getenv('MHS_WEBROOT')  ?: '/var/www/html/public';
+$DATA_DIR = getenv('MHS_DATA_DIR') ?: '/var/www/moodledata';
+
 // Quiz AI-misuse audit — TYPE-AWARE step-trace analysis (Check for MC, Precheck for CodeRunner).
 // Setup for YOUR deployment (env vars or edit the two require lines):
-//   MOODLE_ROOT  = path to your Moodle root (dir containing config.php)   [default /var/www/html/public]
-//   HERMES_HOME  = your hermes home to run from                            [default /var/www/moodledata/.hermes]
+//   MOODLE_ROOT  = path to your Moodle root (dir containing config.php)   [default <webroot>]
+//   HERMES_HOME  = your hermes home to run from                            [default <datadir>/.hermes]
 // Usage: set $QUIZ, then:  cd $HERMES_HOME && timeout 300 php -d display_errors=1 /tmp/quiz_ai_audit.php
 // Handles the key pitfalls:
 //   - get_records_sql keys by FIRST selected column -> always SELECT id first
