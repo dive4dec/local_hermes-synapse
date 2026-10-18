@@ -25,7 +25,7 @@ and print to PDF" and no headless browser is available.
 define('CLI_SCRIPT', true);
 $_SERVER['REQUEST_URI'] = '/edb/';
 $_SERVER['SCRIPT_NAME'] = '/edb/admin/cli/foo.php';
-require_once('/var/www/html/public/config.php');
+require_once('<webroot>/config.php');
 global $CFG, $DB;
 require_once($CFG->libdir . '/clilib.php');
 require_once($CFG->libdir . '/weblib.php');
@@ -216,7 +216,7 @@ $html = <<<HTML
 </html>
 HTML;
 
-$out = '/var/www/moodledata/.hermes/cron/output/irat1_cs2310_preview.html';
+$out = '<datadir>/.hermes/cron/output/irat1_cs2310_preview.html';
 file_put_contents($out, $html);
 echo "HTML written: $out\nQuestions: $total\n";
 ```

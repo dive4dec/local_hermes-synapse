@@ -29,7 +29,7 @@ dompdf has a real box model, so it respects the HTML's `@media print` stylesheet
 2. Convert to PDF: `php scripts/convert_html_to_pdf.php <input.html> <output.pdf>`
    - dompdf is loaded from `$HERMES_HOME/lib/dompdf/vendor/autoload.php` (installed by `install_deps.sh`)
    - The converter sets `defaultMediaType='print'` so print CSS applies, and `isHtml5ParserEnabled=true`.
-3. Output to `/var/www/moodledata/.hermes/cron/output/<name>.pdf`, deliver via `MEDIA:`.
+3. Output to `<datadir>/.hermes/cron/output/<name>.pdf`, deliver via `MEDIA:`.
 
 **Why this beats TCPDF:** TCPDF mixes `writeHTML()` (markdown) with manual `Cell()`/`MultiCell()`/`Rect()` positioning; after a `writeHTML` block it reports the wrong Y, so the next hand-placed element lands on top of the markdown output ("overlaps with non-markdown elements"). The user explicitly confirmed the HTML→print route "looks better."
 
@@ -43,9 +43,9 @@ Use Moodle's bundled `lib/tcpdf/tcpdf.php` when you cannot install dompdf (no ne
 
 - `wkhtmltopdf`, `chromium`, `google-chrome`, `weasyprint`, `pandoc`, `libreoffice` → typically **MISSING** on Moodle pods.
 - Python PDF libs (`reportlab`, `fpdf`, `weasyprint`) → **NOT installed** in the Hermes venv.
-- Moodle's **TCPDF** is bundled at `/var/www/html/public/lib/tcpdf/tcpdf.php`.
+- Moodle's **TCPDF** is bundled at `<webroot>/lib/tcpdf/tcpdf.php`.
 - **dompdf** is installed by `install_deps.sh` to `$HERMES_HOME/lib/dompdf/`.
-- Output location: write PDFs to `/var/www/moodledata/.hermes/cron/output/` (writable, deliverable via `MEDIA:` path).
+- Output location: write PDFs to `<datadir>/.hermes/cron/output/` (writable, deliverable via `MEDIA:` path).
 
 ## Fetching a quiz's questions (Moodle 5.x+)
 

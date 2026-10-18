@@ -1,3 +1,9 @@
+/usr/bin/bash: _parse_usage: line 16: syntax error near unexpected token `('
+/usr/bin/bash: _parse_usage: line 16: ` -?(\[)+([a-zA-Z0-9?]))'
+/usr/bin/bash: error importing function definition for `_parse_usage'
+/usr/bin/bash: _longopt: line 6: syntax error near unexpected token `('
+/usr/bin/bash: _longopt: line 6: ` --!(no-*)dir*)'
+/usr/bin/bash: error importing function definition for `_longopt'
 # Changelog
 
 All notable changes to `local_hermes-synapse` are documented here.
@@ -6,6 +12,52 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 
 ## [Unreleased]
+
+### Added — Portable skill port (2026-10-18)
+
+**59 skills** ported from a live Moodle pod, generalised to be **hermetic,
+secret-free, and course-agnostic**. New skills / files:
+
+- **`skills/mhs-setup/`** — meta-skill that bootstraps the whole set: detects
+  the Moodle version, gates on **5.2+** (floor `2026042000`), derives `MHS_*`
+  env vars from `config.php` / the DB (read-only `mhs_probe.php`), and persists
+  them conflict-aware + idempotently (`mhs_env.sh`). Re-runnable after merging
+  updated skills.
+- **`skills/_conventions/PORTABLE.md`** — single source of truth for the `MHS_`
+  env-var scheme, the read→default→ask→persist contract, the version gate, the
+  token→env mapping, and the incremental-merge rules.
+
+### Changed — generalisation + PII scrub
+
+- **`MHS_` env-var scheme** introduced. Course/site-specific values now read
+  from env vars (never hardcoded):
+  - course codes `cs1302*` → `<coursecode>` / `<other-coursecode>` / `<course>`
+  - numeric course ids → `<cid>` / `<other-coursecid>`
+  - helpers group id → `<helpergid>`
+  - `/var/www/html/public` → `<webroot>`, `/var/www/moodledata` → `<datadir>`
+  - lab/campus/public IP ranges → `<lab-cidr>` / `<campus-cidr>` / `<private-ranges>`
+- **PHP scripts** now carry an env bootstrap (`$WEBROOT`/`$DATA_DIR`/`$CID`/`$QUIZ`
+  from `MHS_*` with standard defaults) so they remain executable while portable.
+- **PII scrubbed** across all ported skills: real personal emails, student/instructor
+  names, staff identities, and the operator hostname (`<moodle-host>`,
+  `<smtp-host>`, `<staff-email>`, `<student-email>`, `<Instructor-Name>`,
+  `<Staff-D>`, `<staff-github>`, `<student-domain>`, `<domain>`). Synthetic
+  test-account identifiers (`LTITEST`, `@example.com`) retained (not PII).
+- **Case-study reference files excluded** (individual-incident narratives
+  containing real student PII).
+
+### Removed
+
+- **`moodle_quiz_audit` skill** deliberately **not ported** — it was already
+  superseded by the in-repo `moodle_audit_quiz` **plugin tool** (see 0.2.2)
+  because the skill had a concurrency bug. The 59 ported skills do not include it.
+
+### Rollback
+
+Each phase is one git commit on branch `portable-port`; rollback any phase with
+`git revert <commit>`:
+`09ae00f` (copy), `6460b8b` + `7361984` (PII), `d9b9b48` (generalise),
+`5117f96` (mhs-setup). Baseline anchor: `3f0959d`.
 
 ## [0.2.2] — 2026-08-21
 
