@@ -1,8 +1,8 @@
 # Sender identity binding — how the agent's "current" Moodle user is resolved, and how to fix drift
 
 Incident (2026-09-24): an urgent grade message to a student in cs1302a_26a was delivered
-"from Chao Zhao (uid 495)" instead of the room owner Chung Chan (uid 494). User correction:
-"Strange, this agent should be bound to the account Chung CHAN." The message had already
+"from Chao Zhao (uid 495)" instead of the room owner <Instructor-Name> (uid 494). User correction:
+"Strange, this agent should be bound to the account <Instructor-Name>." The message had already
 been sent, so it was re-attributed in place. This file captures the mechanism + both recipes.
 
 ## Mechanism (moodle-bridge plugin, `$HERMES_HOME/plugins/moodle-bridge/__init__.py`)
@@ -23,7 +23,7 @@ been sent, so it was re-attributed in place. This file captures the mechanism + 
 
 ## Who is who (course 3, cs1302a_26a — verify against DB before relying)
 
-- **Chung Chan — uid 494**, LTI username `enrol_lti3362f10548e1f10d602bdbe336bed8b4dd080fef`.
+- **<Instructor-Name> — uid 494**, LTI username `enrol_lti3362f10548e1f10d602bdbe336bed8b4dd080fef`.
   Owner of the Matrix room "EQuiz cs1302a-26a" — the expected bound account.
 - **Chao Zhao — uid 495**, LTI username `enrol_lti34461258b45ef7082df58c61d76610bd0e62b159`
   (also editingteacher on course 3).

@@ -173,7 +173,7 @@ Pitfalls:
 
 - A student with **multiple active enrolment plugins** (e.g. manual + LTI) produces multiple `mdl_user_enrolments` rows — use `COUNT(DISTINCT u.id)` for counts, or the total will exceed the roster size.
 - Course scope on groups is `mdl_groups.courseid` (NOT `course`).
-- LTI **test accounts** (email `e_*ltitest@cityu.edu.hk`, username `enrol_lti…`) regularly show up as the only unassigned users — flag them separately rather than presenting them as real students.
+- LTI **test accounts** (email `e_*e_lti_test@<domain>`, username `enrol_lti…`) regularly show up as the only unassigned users — flag them separately rather than presenting them as real students.
 - This counts membership in *any* course group. If the user means a specific grouping (e.g. project groups), also check `mdl_grouping_groups` + that grouping's members.
 - **The list changes between asks** — the LTI group sync and manual assignments run in the background; if the user asks the same question twice, re-run the query rather than reusing a previous answer.
 

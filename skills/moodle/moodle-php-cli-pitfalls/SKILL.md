@@ -134,7 +134,7 @@ can be swallowed under some wrappers.
 
 ## 10. Mail
 No `sockets` extension; use `stream_socket_client`. Open campus relay
-`smtp.cs.cityu.edu.hk:587`, no AUTH/STARTTLS — see the `email-student-group` skill.
+`<smtp-host>:587`, no AUTH/STARTTLS — see the `email-student-group` skill.
 
 ## 11. grade_items / grade_grades keying (grading lookups, E-Quiz 2 audit 2026-09-22)
 - **`grade_items` is looked up by `itemmodule` + `iteminstance` + `courseid`**, NOT by the

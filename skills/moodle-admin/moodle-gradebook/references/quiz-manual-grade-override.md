@@ -212,7 +212,7 @@ Expect 2 rows (a `-mark` and a `-comment`) per scored question attempt. For an e
 - **Skip description slots** (the 0-mark Information page) — marking them is
   harmless but pointless; `manual_grade` on a 0-max question has no mark field.
 - **Attribute the action**: pass the grader's uid (e.g. 2 = admin /
-  chung.chan) as the `$userid` in `manual_grade()` so the step audit trail
+  <staff-username>) as the `$userid` in `manual_grade()` so the step audit trail
   credits the right person.
 - Raw vs gradebook scale: `sumgrades`/`quiz_grades.grade`/`grade_grades.rawgrade`
   all end up 0 here, but for partial overrides remember the gradebook max is

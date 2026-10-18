@@ -1,3 +1,9 @@
+/usr/bin/bash: _parse_usage: line 16: syntax error near unexpected token `('
+/usr/bin/bash: _parse_usage: line 16: ` -?(\[)+([a-zA-Z0-9?]))'
+/usr/bin/bash: error importing function definition for `_parse_usage'
+/usr/bin/bash: _longopt: line 6: syntax error near unexpected token `('
+/usr/bin/bash: _longopt: line 6: ` --!(no-*)dir*)'
+/usr/bin/bash: error importing function definition for `_longopt'
 # Group & Grouping Cleanup (CS1302 courses)
 
 When removing stale lab/tutorial groups and their quiz overrides.
@@ -19,9 +25,12 @@ foreach ($cms as $cm) {
 }
 ```
 
-Known mappings (verify against the label each time — changes per semester):
-- **cs1302_26a (course 7):** DONG (lectures CB1/CC1; labs LB1/LB3/LC1/LC3/LB4), XU (lecture CA1; labs LA1–LA4/LB2/LC2), ZHAO (TA Coordinator). T* tutorial groups are stale here.
-- **cs1302a_26a (course 3):** CHAN Chung (lectures C01/CA1; labs T01/TA1/T02), ZHAO (TA Coordinator). LA*/LB*/LC* groups are stale here.
+Known mappings (verify against the label each time — changes per semester). In the
+example below, instructor names are generic placeholders; on your course, look up
+each tutor/TA's surname from `mdl_user` (join via `mdl_role_assignments`) and the
+group labels from `mdl_groups`.
+- **<course-B> (<cid>):** <instructor-1> (lectures …; labs …), <instructor-2> (…), <ta-coordinator>. Some tutorial groups are stale here.
+- **<course-A> (<cid>):** <instructor-3> (lectures …; labs …), <ta-coordinator>. Some lab/tutorial groups are stale here.
 - Also: class groups (C*), "helpers", and exam/makeup groups are kept even if not listed as lab groups.
 
 ## Procedure (user-specified order)

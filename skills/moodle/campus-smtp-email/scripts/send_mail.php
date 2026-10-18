@@ -1,7 +1,7 @@
 <?php
 // campus-smtp-email batch sender.
 // Usage:  php /var/www/moodledata/.hermes/skills/moodle/campus-smtp-email/scripts/send_mail.php \
-//             --from chung.chan@cityu.edu.hk --from-name "Chung Chan" \
+//             --from <staff-email> --from-name "<Instructor-Name>" \
 //             --subject "..." --body-file /tmp/body.txt \
 //             (--to a@x.com[,b@y.com,...] | --roster "SELECT u.id,u.firstname,u.lastname,u.email FROM ... WHERE ...")
 //          --log /tmp/batch.log  (optional; default /tmp/send_<ts>.log)
@@ -18,7 +18,7 @@ function argv_get($name, $default = null) {
 }
 
 function smtp_send($to, $toName, $subject, $body, $from, $fromName) {
-    $HOST = 'smtp.cs.cityu.edu.hk'; $PORT = 587;
+    $HOST = '<smtp-host>'; $PORT = 587;
     $c = @stream_socket_client("tcp://$HOST:$PORT", $e, $es, 10);
     if (!$c) return ['ok' => false, 'resp' => "CONNECT FAIL: $es", 'qid' => '-'];
     stream_set_timeout($c, 15);
@@ -40,7 +40,7 @@ function smtp_send($to, $toName, $subject, $body, $from, $fromName) {
         "From: $fromName <$from>",
         "To: $toName <$to>",
         'Subject: =?UTF-8?B?' . base64_encode($subject) . '?=',
-        'Message-ID: <' . uniqid('hermes', true) . '@cs1302a.cityu.edu.hk>',
+        'Message-ID: <' . uniqid('hermes', true) . '@cs1302a.<domain>>',
         'Date: ' . date('r'),
         'MIME-Version: 1.0',
         'Content-Type: text/plain; charset=UTF-8',
@@ -63,7 +63,7 @@ define('MOODLE_INTERNAL', true);
 require('/var/www/html/public/config.php');
 require_once('/var/www/html/public/lib/setup.php');
 
-$from = argv_get('from', 'chung.chan@cityu.edu.hk');
+$from = argv_get('from', '<staff-email>');
 $fromName = argv_get('from-name', 'CS1302A Teaching Team');
 $subject = argv_get('subject');
 $body = argv_get('body');

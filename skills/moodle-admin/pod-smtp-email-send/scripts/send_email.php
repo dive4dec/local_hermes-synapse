@@ -1,14 +1,14 @@
 <?php
-// Send an email via the open campus SMTP relay (smtp.cs.cityu.edu.hk:587, no auth).
+// Send an email via the open campus SMTP relay (<smtp-host>:587, no auth).
 // Usage: php send_email.php <to> "<subject>" [body | @/path/to/bodyfile] [from]
 //   from defaults to the campus admin mailbox (same-domain, relay-accepted).
 // Prints the full SMTP transcript. Success = "250 2.0.0 <queueid> Message accepted for delivery".
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-$host = 'smtp.cs.cityu.edu.hk';
+$host = '<smtp-host>';
 $port = 587;
-$defaultFrom = 'chung.chan@cityu.edu.hk';
+$defaultFrom = '<staff-email>';
 
 $args = array_slice($argv, 1);
 if (count($args) < 2) {
@@ -71,7 +71,7 @@ $headers = [
     'From: ' . $from,
     'To: ' . $to,
     'Subject: ' . $subject,
-    'Message-ID: <' . uniqid('hermes', true) . '@cs1302a.cityu.edu.hk>',
+    'Message-ID: <' . uniqid('hermes', true) . '@cs1302a.<domain>>',
     'Date: ' . gmdate('D, d M Y H:i:s ') . (new DateTime())->format('P'),
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=UTF-8',

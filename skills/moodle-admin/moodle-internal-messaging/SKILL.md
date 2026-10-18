@@ -1,9 +1,9 @@
 ---
 name: moodle-internal-messaging
-description: "Deliver a message to a user via Moodle's INTERNAL messaging (inbox + popup notification), not email. Verified on dive.cs.cityu.edu.hk (Moodle 5.x): the message store is mdl_notifications (NOT mdl_message), popups go to mdl_message_popup_notifications, and the send is done by building a \\core\\message\\message event and calling message_send(). Use when asked to 'message/notify the student', 'send via Moodle inbox', when email is unavailable or the user prefers a popup, or to send a grade/integrity notification without email."
+description: "Deliver a message to a user via Moodle's INTERNAL messaging (inbox + popup notification), not email. Verified on <moodle-host> (Moodle 5.x): the message store is mdl_notifications (NOT mdl_message), popups go to mdl_message_popup_notifications, and the send is done by building a \\core\\message\\message event and calling message_send(). Use when asked to 'message/notify the student', 'send via Moodle inbox', when email is unavailable or the user prefers a popup, or to send a grade/integrity notification without email."
 ---
 
-# Moodle Internal Messaging (inbox + popup), Moodle 5.x / dive.cs.cityu.edu.hk
+# Moodle Internal Messaging (inbox + popup), Moodle 5.x / <moodle-host>
 
 Deliver a message into a user's Moodle inbox and trigger a popup notification, from a CLI PHP script. This is the reliable non-email channel on this pod: **email cannot be dispatched from local `mail()`/`sendmail`** (dead 127.0.0.1) — if the user actually wants real email, use the open campus relay via `pod-smtp-email-send` (see below); for anything "message them / notify them" or when email is off the table, use internal messaging.
 
@@ -79,7 +79,7 @@ Expected: one `mdl_notifications` row with `timeread IS NULL` and the right `use
 
 ## Pitfalls
 
-1. **Verify the bound account BEFORE every send — the agent's "current" Moodle user is NOT fixed.** The moodle-bridge plugin resolves it from `$HERMES_HOME/run/identity/<HERMES_SESSION_KEY>.identity.json` (per session), falling back to `$HERMES_HOME/.moodle_identity`, which is **last-writer-wins**: any teacher who chats with the agent through a Moodle LTI chat overwrites it, so a session with no per-session file (e.g. the Matrix DM) silently acts as the last LTI teacher. 2026-09-24 incident: a serious grade message went out "from Chao Zhao (495)" when the room owner is Chung Chan (494) — the student saw a from-name that contradicted the signature. Always: (a) call `moodle_get_my_courses` and confirm the returned name is the owner of this room before any attribution-sensitive action; (b) if it's wrong, write the per-session + legacy identity files and re-verify (recipe in `references/sender-identity-binding.md`); (c) set `userfrom` to the owner's uid; (d) if a message already went out as the wrong user, re-attribute it in place (`mdl_notifications.useridfrom` + regenerate `customdata.notificationiconurl` — same reference file).
+1. **Verify the bound account BEFORE every send — the agent's "current" Moodle user is NOT fixed.** The moodle-bridge plugin resolves it from `$HERMES_HOME/run/identity/<HERMES_SESSION_KEY>.identity.json` (per session), falling back to `$HERMES_HOME/.moodle_identity`, which is **last-writer-wins**: any teacher who chats with the agent through a Moodle LTI chat overwrites it, so a session with no per-session file (e.g. the Matrix DM) silently acts as the last LTI teacher. 2026-09-24 incident: a serious grade message went out "from Chao Zhao (495)" when the room owner is <Instructor-Name> (494) — the student saw a from-name that contradicted the signature. Always: (a) call `moodle_get_my_courses` and confirm the returned name is the owner of this room before any attribution-sensitive action; (b) if it's wrong, write the per-session + legacy identity files and re-verify (recipe in `references/sender-identity-binding.md`); (c) set `userfrom` to the owner's uid; (d) if a message already went out as the wrong user, re-attribute it in place (`mdl_notifications.useridfrom` + regenerate `customdata.notificationiconurl` — same reference file).
 2. **`mdl_message` ≠ the store.** Verifying against `mdl_message` returns 0 rows and looks like the send failed. The real row is in `mdl_notifications` (and the popup in `mdl_message_popup_notifications`).
 3. **No `core_message::async()`** on this build — "Class core_message not found". Use the manual `\core\message\message` event + `message_send()`.
 4. **Email processor being enabled doesn't mean email delivers.** With the local transport dead, the email processor is a silent no-op while the inbox + popup rows still land. If the owner wants guaranteed delivery, either use internal messaging (this skill) or the campus relay (`pod-smtp-email-send`).
@@ -91,6 +91,6 @@ The most common use is a weighty note to a student about a grade consequence (e.
 
 ## Related skills
 
-- `pod-smtp-email-send` — the only working REAL email path on this pod (open campus relay `smtp.cs.cityu.edu.hk:587`, raw ESMTP, no auth). If the user wants an actual email, use that — do not conclude "no mail transport" from local `sendmail`/`127.0.0.1:25` being dead.
+- `pod-smtp-email-send` — the only working REAL email path on this pod (open campus relay `<smtp-host>:587`, raw ESMTP, no auth). If the user wants an actual email, use that — do not conclude "no mail transport" from local `sendmail`/`127.0.0.1:25` being dead.
 - `moodle-mcp-db-query` — read-only DB verification, keyword-filter gotchas.
 - `moodle-gradebook` → `references/quiz-manual-grade-override.md` — the per-question manual zeroing that these notifications typically follow up.

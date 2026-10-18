@@ -12,7 +12,7 @@ global $DB;
 require_once('/var/www/html/public/mod/quiz/locallib.php');
 require_once('/var/www/html/public/mod/quiz/classes/quiz_attempt.php');
 
-$QUIZID = 63; $grader = 494; // Chung Chan
+$QUIZID = 63; $grader = 494; // <Instructor-Name>
 $comment = 'Mark set to 0: student was not present when sampled to explain the E-Quiz 4 submission. See course email dated 2026-10-07.';
 $targets = [16823 => 677, 16929 => 731]; // attemptid => userid
 

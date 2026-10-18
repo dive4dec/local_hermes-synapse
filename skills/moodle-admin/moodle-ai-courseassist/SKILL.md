@@ -5,7 +5,7 @@ description: Moodle 5.x AI course-assist feature (Explain/Summarise on quizzes a
 
 # Moodle AI Course-Assist (Explain / Summarise)
 
-Student-facing AI feature on dive.cs.cityu.edu.hk (Moodle 5.2.1): an **AI features** button (sparkles icon) on activity pages (e.g. quizzes) offering **Explain** and **Summarise** of the current page content. Plugin `aiplacement_courseassist` is enabled on this site; capabilities allow students by default.
+Student-facing AI feature on <moodle-host> (Moodle 5.2.1): an **AI features** button (sparkles icon) on activity pages (e.g. quizzes) offering **Explain** and **Summarise** of the current page content. Plugin `aiplacement_courseassist` is enabled on this site; capabilities allow students by default.
 
 ## Before writing student-facing content about any UI feature
 

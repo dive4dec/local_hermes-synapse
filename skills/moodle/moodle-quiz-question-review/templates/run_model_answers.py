@@ -16,7 +16,7 @@ Semantics (see references/moodle52-schemas.md):
   - each test = fresh python process: decoded answer + '\n' + testcode
   - Scratchpad-JSON answers: join answer_code[]
   - Twig answers/templateparams: rendered with a dummy student (John / SMITH /
-    john_smith@my.cityu.edu.hk)
+    <student-email>)
   - combinator questions: order = testcode THEN answer (handle per-template)
   - grader: per-line rstrip; empty expected => pass iff rc==0 and stderr empty
 
@@ -43,10 +43,10 @@ DUMMY = {
     '{{ STUDENT.lastname ~ \' \' ~ STUDENT.firstname }}': 'SMITH John',
     '{{ STUDENT.lastname }}': 'SMITH',
     '{{ STUDENT.firstname }}': 'John',
-    '{{ STUDENT.email }}': 'john_smith@my.cityu.edu.hk',
+    '{{ STUDENT.email }}': '<student-email>',
     '{{ firstname }}': 'John',
     '{{ lastname }}': 'SMITH',
-    '{{ email }}': 'john_smith@my.cityu.edu.hk',
+    '{{ email }}': '<student-email>',
 }
 def twig(s):
     if not s:

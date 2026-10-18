@@ -16,8 +16,8 @@ When a Moodle course route (WWWROOT path) changes, hardcoded full URLs in page c
 ## Prerequisites
 
 Ask the user for:
-1. **Old URL prefix** — e.g. `https://socratic.cs.cityu.edu.hk/cs1302eq-26a`
-2. **New URL prefix** — e.g. `https://dive.cs.cityu.edu.hk/cs1302a-eq`
+1. **Old URL prefix** — e.g. `https://socratic.cs.<domain>/cs1302eq-26a`
+2. **New URL prefix** — e.g. `https://<moodle-host>/cs1302a-eq`
 
 ## Steps
 
@@ -103,20 +103,20 @@ WHERE intro LIKE '%OLD_PREFIX%'
 
 ## Fixing question bank links
 
-Questions may link to `ccha23.github.io/OPTM/` or `ccha23.github.io/optlite/` which need updating. Find and fix them:
+Questions may link to `<staff-github>/OPTM/` or `<staff-github>/optlite/` which need updating. Find and fix them:
 
 ```php
 $result = $mysqli->query("
     SELECT q.id, q.questiontext, q.generalfeedback
     FROM mdl_question q
-    WHERE q.questiontext LIKE '%%ccha23%%'
-       OR q.generalfeedback LIKE '%%ccha23%%'
+    WHERE q.questiontext LIKE '%%<staff-github>%%'
+       OR q.generalfeedback LIKE '%%<staff-github>%%'
 ");
 while ($row = $result->fetch_assoc()) {
-    $newText = str_replace('https://ccha23.github.io/OPTM/', 'https://dive.cs.cityu.edu.hk/OPT_Mentor/', $row['questiontext']);
-    $newText = str_replace('https://ccha23.github.io/optlite/', 'https://dive.cs.cityu.edu.hk/OPT_Mentor/', $newText);
-    $newFeedback = str_replace('https://ccha23.github.io/OPTM/', 'https://dive.cs.cityu.edu.hk/OPT_Mentor/', $row['generalfeedback']);
-    $newFeedback = str_replace('https://ccha23.github.io/optlite/', 'https://dive.cs.cityu.edu.hk/OPT_Mentor/', $newFeedback);
+    $newText = str_replace('https://<staff-github>/OPTM/', 'https://<moodle-host>/OPT_Mentor/', $row['questiontext']);
+    $newText = str_replace('https://<staff-github>/optlite/', 'https://<moodle-host>/OPT_Mentor/', $newText);
+    $newFeedback = str_replace('https://<staff-github>/OPTM/', 'https://<moodle-host>/OPT_Mentor/', $row['generalfeedback']);
+    $newFeedback = str_replace('https://<staff-github>/optlite/', 'https://<moodle-host>/OPT_Mentor/', $newFeedback);
     $stmt = $mysqli->prepare("UPDATE mdl_question SET questiontext=?, generalfeedback=? WHERE id=?");
     $stmt->bind_param('ssi', $newText, $newFeedback, $row['id']);
     $stmt->execute();
@@ -138,7 +138,7 @@ $ctx = $mysqli->query("SELECT contextlevel, instanceid FROM mdl_context WHERE id
 
 - **Always include `mod/` in relative URLs** — `../mod/resource/view.php` is correct; `../resource/view.php` is broken. Moodle module URLs always have `mod/` in the path.
 - **`view.php` for same-module links** — When linking from one page to another page, both live in `mod/page/`, so just `view.php?id=N` (no `../` needed).
-- **Question bank links** — `mdl_question.questiontext` and `generalfeedback` also store links. `ccha23.github.io/OPTM/` and `ccha23.github.io/optlite/` are common old links. The initial 100-row query cap hides the full count — don't rely on `LIMIT 100` results.
+- **Question bank links** — `mdl_question.questiontext` and `generalfeedback` also store links. `<staff-github>/OPTM/` and `<staff-github>/optlite/` are common old links. The initial 100-row query cap hides the full count — don't rely on `LIMIT 100` results.
 - **Shared question categories** — Questions may live in a context tree that spans multiple courses (e.g., a shared E-Quiz category). Tracing `question_id → question_versions → question_bank_entries → question_categories → context → course` reveals the actual ownership.
 - **Base64 password** — DB password in config.php is base64-encoded
 - **mdl_label uses `intro`, NOT `content`** — easy to miss

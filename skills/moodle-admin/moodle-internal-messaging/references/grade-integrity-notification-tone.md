@@ -1,7 +1,7 @@
 # Tone for serious grade / integrity notifications
 
 User's corrections to a first draft (2026-09-24, E-Quiz 2 zero-out note to a student),
-encoded as rules for this class of message. The owner (Chung Chan) is precise about
+encoded as rules for this class of message. The owner (<Instructor-Name>) is precise about
 what may and may not be asserted in a written student notification.
 
 ## Hard rules (from explicit correction)

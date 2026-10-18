@@ -5,7 +5,7 @@ description: "Manage Moodle forum content: resolve forum URLs, copy discussions/
 
 # Moodle Forum Content Management
 
-Read, copy, and verify forum discussions/posts on dive.cs.cityu.edu.hk (Moodle 5.x). Primary use case: syncing FAQ-style posts between the parallel CS1302 courses (cs1302a_26a=3 and cs1302_26a=7), which each have their own CE-Quiz FAQ / Project FAQ forums that must be kept in sync when a course is cloned.
+Read, copy, and verify forum discussions/posts on <moodle-host> (Moodle 5.x). Primary use case: syncing FAQ-style posts between the parallel CS1302 courses (cs1302a_26a=3 and cs1302_26a=7), which each have their own CE-Quiz FAQ / Project FAQ forums that must be kept in sync when a course is cloned.
 
 ## Triggers
 
@@ -64,7 +64,7 @@ When the ask is "make an announcement" (not "copy this post"), post a brand-new 
 6. Verify via the page-SQL join in the "Verifying" section (it's the top post). Note: in this build **`mdl_forum_discussions` has NO `coursemodules`/`numreplies`/`sawall`/`subscription`/`timecreated`/`timemodified2` columns** — do not insert them.
 7. Flag to the user that other same-named "Announcements" forums exist and offer to mirror if wanted.
 
-Author: on course 3 the instructor is **user 494 (Chung Chan, chung.chan@cityu.edu.hk)** — not user 2 (that's a different site-admin identity used for old FAQ posts). Use 494 for his announcements so they're in his name.
+Author: on course 3 the instructor is **user 494 (<Instructor-Name>, <staff-email>)** — not user 2 (that's a different site-admin identity used for old FAQ posts). Use 494 for his announcements so they're in his name.
 
 ## Verifying the discussion renders in the listing (the trap)
 

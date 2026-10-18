@@ -91,7 +91,7 @@ Then **always** `cd /var/www/html/public && moosh -n cache-clear`.
 
 ## Verifying a description edit in the UI
 
-The live site (`dive.cs.cityu.edu.hk`) is **login-gated (LTI)** — unauthenticated `curl` of any course URL returns a 303 to `login/index.php` or a 404 "Error" page. Do NOT loop on curl variations of `view.php`; it will never render without a session.
+The live site (`<moodle-host>`) is **login-gated (LTI)** — unauthenticated `curl` of any course URL returns a 303 to `login/index.php` or a 404 "Error" page. Do NOT loop on curl variations of `view.php`; it will never render without a session.
 
 Instead verify **server-side**: boot the framework (CLI) and run the exact same function the UI uses to render the text:
 

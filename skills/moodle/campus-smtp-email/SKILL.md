@@ -13,9 +13,9 @@ Send genuine outbound email from the phpfpm pod to students or other users.
 
 ## Critical facts (verified — do not re-derive)
 - **Moodle's mail classes are STRIPPED from this build.** `lib/classes/user_mailing.php`, `smtp.php`, `mail.php` are all MISSING; no PHPMailer/Symfony. `core_user_mailing::send_mail()` and `moodle_send_mail()` will fatal. **Never rely on Moodle to send mail.**
-- **Open campus relay:** `smtp.cs.cityu.edu.hk:587` (Sendmail 8.15.1). **No AUTH, no STARTTLS advertised.** Plain TCP → EHLO → MAIL → RCPT → DATA.
+- **Open campus relay:** `<smtp-host>:587` (Sendmail 8.15.1). **No AUTH, no STARTTLS advertised.** Plain TCP → EHLO → MAIL → RCPT → DATA.
 - **PHP has NO `sockets` extension**, but `stream_socket_client` / `fsockopen` work fine.
-- **Default sender:** `chung.chan@cityu.edu.hk` (Admin User, uid 2).
+- **Default sender:** `<staff-email>` (Admin User, uid 2).
 - **"250 Message accepted for delivery" = queued, NOT proven delivered.** Same-domain plain-text usually lands in seconds; only the recipient's inbox confirms.
 
 ## Workflow
@@ -38,9 +38,9 @@ Send genuine outbound email from the phpfpm pod to students or other users.
 ## Single send — verified PHP (write to /tmp and run)
 ```php
 <?php
-$HOST='smtp.cs.cityu.edu.hk'; $PORT=587;
-$from='chung.chan@cityu.edu.hk'; $fromName='Chung Chan';
-$to='ccha23@cityu.edu.hk'; $toName='Chung Chan';
+$HOST='<smtp-host>'; $PORT=587;
+$from='<staff-email>'; $fromName='<Instructor-Name>';
+$to='<student-email>'; $toName='<Instructor-Name>';
 $subject='Subject line'; $body="line1\n\nline2";
 
 $c = @stream_socket_client("tcp://$HOST:$PORT", $e, $es, 10);
@@ -59,7 +59,7 @@ $headers=[
   "From: $fromName <$from>",
   "To: $toName <$to>",
   'Subject: =?UTF-8?B?'.base64_encode($subject).'?=',   // base64-safe for non-ASCII
-  'Message-ID: <'.uniqid('hermes',true).'@cs1302a.cityu.edu.hk>',
+  'Message-ID: <'.uniqid('hermes',true).'@cs1302a.<domain>>',
   'Date: '.date('r'),
   'MIME-Version: 1.0',
   'Content-Type: text/plain; charset=UTF-8',

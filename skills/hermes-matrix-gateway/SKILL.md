@@ -1,6 +1,6 @@
 ---
 name: hermes-matrix-gateway
-description: "Set up or troubleshoot the Matrix/Element gateway for Hermes Agent on this pod (dive.cs.cityu.edu.hk). Exact dependency pins (musl host, E2EE off), .env config, gateway control script, Element room-creation trap, device/verification hygiene. Use when connecting Hermes to Matrix, when the gateway log says 'Matrix: required packages not installed', when Matrix messages silently fail to arrive, or when the user logs the bot in from a new device and gets an Element verification prompt."
+description: "Set up or troubleshoot the Matrix/Element gateway for Hermes Agent on this pod (<moodle-host>). Exact dependency pins (musl host, E2EE off), .env config, gateway control script, Element room-creation trap, device/verification hygiene. Use when connecting Hermes to Matrix, when the gateway log says 'Matrix: required packages not installed', when Matrix messages silently fail to arrive, or when the user logs the bot in from a new device and gets an Element verification prompt."
 ---
 
 # Hermes Matrix Gateway Setup (this pod)

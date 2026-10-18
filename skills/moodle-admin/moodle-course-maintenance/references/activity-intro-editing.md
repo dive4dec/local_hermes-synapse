@@ -47,7 +47,7 @@ The hard-fail on `substr_count !== 1` prevents double-application or silent no-o
 
 ## Verifying when the live site is login-gated
 
-`dive.cs.cityu.edu.hk` sits behind LTI login — anonymous `curl` returns the login/error page regardless of URL, so you cannot scrape rendered HTML. Two options:
+`<moodle-host>` sits behind LTI login — anonymous `curl` returns the login/error page regardless of URL, so you cannot scrape rendered HTML. Two options:
 
 - **Strongest available check:** render the stored text through Moodle's own renderer in a CLI script:
 

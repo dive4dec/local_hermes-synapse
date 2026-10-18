@@ -59,7 +59,7 @@ Lecture labels often contain HTML links to the same notebooks. To verify LTI act
 
 The label URL is typically:
 ```
-https://canvas.cityu.edu.hk/courses/XXX/external_tools/retrieve?display=borderless&url=<encoded_jupyterhub_lti_launch_url>
+https://canvas.<domain>/courses/XXX/external_tools/retrieve?display=borderless&url=<encoded_jupyterhub_lti_launch_url>
 ```
 
 Decode step by step:
@@ -253,7 +253,7 @@ ORDER BY assignments, eid;
 ```
 
 **Pitfalls (verified 2026-08-29):**
-- **Test accounts pollute the "never logged in" list.** The course-3 roster contains tester emails (`e_bltitest@cityu.edu.hk`, `e_cltitest@cityu.edu.hk`, `e_eltitest@cityu.edu.hk`). Two of them *do* have auto-created accounts (Bob LTITEST user 22, Chris LTITEST user 23, usernames `enrol_lti…`) yet their roster rows still show `userid` NULL. Cross-check each unlinked email against `mdl_user` (`SELECT u.id FROM mdl_user u WHERE u.email = r.eid`) and report test accounts separately from real students.
+- **Test accounts pollute the "never logged in" list.** The course-3 roster contains tester emails (`e_lti_test0@<domain>`, `e_lti_test2@<domain>`, `e_lti_test1@<domain>`). Two of them *do* have auto-created accounts (Bob LTITEST user 22, Chris LTITEST user 23, usernames `enrol_lti…`) yet their roster rows still show `userid` NULL. Cross-check each unlinked email against `mdl_user` (`SELECT u.id FROM mdl_user u WHERE u.email = r.eid`) and report test accounts separately from real students.
 - The roster carries only email + Lec/Lab assignment — **not the student's name**. Derive a display name from the email prefix (CityU convention: `firstname-initiallastnameN-c`) or join `mdl_user` for linked rows only.
 - Don't conflate roster size (212) with enrolled-student counts (182): the roster includes not-yet-logged-in + test rows; the enrolment count includes LTI auto-provisioned accounts.
 

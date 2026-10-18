@@ -28,7 +28,7 @@ Per-user footprint to check before deleting: enrolments (`mdl_user_enrolments` �
 
 ### Delete
 
-`moosh -n user-delete <username> [more usernames...]` (accepts multiple usernames in one call) — calls Moodle's `user_delete_user()`, the standard full-deletion path. This Moodle 5.x `delete_user()` is a **soft delete, by design**: the `mdl_user` row is kept with `deleted=1`, username renamed to `<email>.<timestamp>` (e.g. `e_altitest@cityu.edu.hk.1787959770`), email replaced by an MD5 hash, and **all** course data stripped (enrolments, role assignments, group memberships, grades, completions, tokens, sessions). It does **NOT** remove `mdl_quiz_attempts` / `mdl_quiz_grades` rows or `logstore_standard_log` history — those remain attached to the deleted user (invisible in UI reports; purge manually with `delete_records` only if the user wants a hard scrub).
+`moosh -n user-delete <username> [more usernames...]` (accepts multiple usernames in one call) — calls Moodle's `user_delete_user()`, the standard full-deletion path. This Moodle 5.x `delete_user()` is a **soft delete, by design**: the `mdl_user` row is kept with `deleted=1`, username renamed to `<email>.<timestamp>` (e.g. `e_ae_lti_test@<domain>.1787959770`), email replaced by an MD5 hash, and **all** course data stripped (enrolments, role assignments, group memberships, grades, completions, tokens, sessions). It does **NOT** remove `mdl_quiz_attempts` / `mdl_quiz_grades` rows or `logstore_standard_log` history — those remain attached to the deleted user (invisible in UI reports; purge manually with `delete_records` only if the user wants a hard scrub).
 
 ### Verify
 
@@ -656,7 +656,7 @@ define('CLI_SCRIPT', TRUE);
 $_SERVER['REQUEST_URI'] = '/';
 $_SERVER['SCRIPT_NAME'] = '/admin/cli/set-config.php';
 require_once('/var/www/html/config.php');
-set_config('smtphosts', 'smtp.cs.cityu.edu.hk:587');
+set_config('smtphosts', '<smtp-host>:587');
 echo get_config('', 'smtphosts') . PHP_EOL;
 ?>
 ```

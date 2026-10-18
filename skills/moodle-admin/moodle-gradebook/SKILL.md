@@ -1,9 +1,9 @@
 ---
 name: moodle-gradebook
-description: "Moodle gradebook work on dive.cs.cityu.edu.hk (Moodle 5.x): inspect grade structure, weight semantics (aggregationcoef2), version-specific aggregation constants, add manual grade items, grade per group via member propagation, and per-question quiz manual override (mark + comment) via the question engine."
+description: "Moodle gradebook work on <moodle-host> (Moodle 5.x): inspect grade structure, weight semantics (aggregationcoef2), version-specific aggregation constants, add manual grade items, grade per group via member propagation, and per-question quiz manual override (mark + comment) via the question engine."
 ---
 
-# Moodle Gradebook (Moodle 5.x, dive.cs.cityu.edu.hk)
+# Moodle Gradebook (Moodle 5.x, <moodle-host>)
 
 ## Triggers
 

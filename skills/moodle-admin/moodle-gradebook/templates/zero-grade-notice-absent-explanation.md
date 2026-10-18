@@ -29,7 +29,7 @@ Today in class I sampled several students to explain their submissions on E-Quiz
 Since no explanation was given, the mark for E-Quiz <N> (your recorded score was <score>/<max>) is set to 0. This decision is final; there is no makeup opportunity for this quiz.
 
 Regards,
-Chung Chan
+<Instructor-Name>
 CS1302A Intro to Computer Programming
 
 ---

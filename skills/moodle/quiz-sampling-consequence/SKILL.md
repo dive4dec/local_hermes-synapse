@@ -33,7 +33,7 @@ was <X>/<Y>) is set to 0. This decision is final; there is no makeup
 opportunity for this quiz.
 
 Regards,
-Chung Chan
+<Instructor-Name>
 CS1302A Intro to Computer Programming
 ```
 Single-question variant: line 2 = "…you were asked to explain Question N

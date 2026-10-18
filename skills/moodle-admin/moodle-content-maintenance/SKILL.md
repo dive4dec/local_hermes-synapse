@@ -112,7 +112,7 @@ URL-encoded content (`%3A`, `%2F`) is still text-searchable — `LIKE` matches i
 ### Canvas LTI wrapper URLs with embedded course IDs
 
 Jupyter notebook links are often wrapped through Canvas LTI:
-`https://canvas.cityu.edu.hk/courses/67308/external_tools/retrieve?display=borderless&url=...cs1302_25b/hub/lti/launch...`. Both the **Canvas course ID** (`67308`) and the **JupyterHub course slug** (`cs1302_25b`) must be replaced. Find them:
+`https://canvas.<domain>/courses/67308/external_tools/retrieve?display=borderless&url=...cs1302_25b/hub/lti/launch...`. Both the **Canvas course ID** (`67308`) and the **JupyterHub course slug** (`cs1302_25b`) must be replaced. Find them:
 
 ```sql
 SELECT cm.id AS cmid, l.intro

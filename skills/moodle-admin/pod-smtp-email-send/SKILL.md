@@ -1,6 +1,6 @@
 ---
 name: pod-smtp-email-send
-description: "Send outbound email from the Moodle pod (dive.cs.cityu.edu.hk) via the OPEN campus SMTP relay smtp.cs.cityu.edu.hk:587 using raw ESMTP over stream_socket_client — no auth required. This is the ONLY working email path on this build: there is no PHPMailer (no vendor/) and the core Moodle mail classes (user_mailing/smtp/mail) are stripped. Use whenever the user asks to email a student/person, send a quiz reminder, or 'test SMTP / send an email'. Supersedes the (protected, PHPMailer-based) moodle-smtp-email skill for this build."
+description: "Send outbound email from the Moodle pod (<moodle-host>) via the OPEN campus SMTP relay <smtp-host>:587 using raw ESMTP over stream_socket_client — no auth required. This is the ONLY working email path on this build: there is no PHPMailer (no vendor/) and the core Moodle mail classes (user_mailing/smtp/mail) are stripped. Use whenever the user asks to email a student/person, send a quiz reminder, or 'test SMTP / send an email'. Supersedes the (protected, PHPMailer-based) moodle-smtp-email skill for this build."
 ---
 
 # Send Outbound Email from the Moodle Pod
@@ -22,12 +22,12 @@ The **only verified working** email path on this pod: drive the **open campus re
 
 ## Verified relay facts (2026-09-15)
 
-- Server: `smtp.cs.cityu.edu.hk:587` → announces `mail.cs.cityu.edu.hk` (Sendmail 8.15.1).
+- Server: `<smtp-host>:587` → announces `mail.cs.<domain>` (Sendmail 8.15.1).
 - **No AUTH, no STARTTLS advertised** — plain ESMTP: `EHLO` → `MAIL FROM` → `RCPT TO` → `DATA` → `QUIT`. User confirmed the relay needs no credentials.
-- Pod egresses as `144.214.120.51` (`dive.cs.cityu.edu.hk`); the EHLO banner notes "(may be forged)" — the relay trusts campus source IPs.
-- `mdl_config` rows `smtpuser`/`smtppass` are **empty**; `smtphosts=smtp.cs.cityu.edu.hk:587`, `smtpauthtype=LOGIN` are vestigial — credentials are NOT needed.
+- Pod egresses as `144.214.120.51` (`<moodle-host>`); the EHLO banner notes "(may be forged)" — the relay trusts campus source IPs.
+- `mdl_config` rows `smtpuser`/`smtppass` are **empty**; `smtphosts=<smtp-host>:587`, `smtpauthtype=LOGIN` are vestigial — credentials are NOT needed.
 - No PHP `sockets` extension, but `stream_socket_client` works.
-- **Sender identity:** use `chung.chan@cityu.edu.hk` (Admin User, uid 2) as the From address — a real same-domain campus mailbox. "Chung Chan" the student (cs1302a_26a, uid 3) = `ccha23@cityu.edu.hk`.
+- **Sender identity:** use `<staff-email>` (Admin User, uid 2) as the From address — a real same-domain campus mailbox. "<Instructor-Name>" the student (cs1302a_26a, uid 3) = `<student-email>`.
 - Success = `250 2.0.0 <queueid> Message accepted for delivery` on the DATA end.
 
 ## Quick send (working)
@@ -35,15 +35,15 @@ The **only verified working** email path on this pod: drive the **open campus re
 ```
 php <skill>/scripts/send_email.php <to> "<subject>" [body | @/path/to/bodyfile] [from]
 ```
-`from` defaults to `chung.chan@cityu.edu.hk`. The script prints the full SMTP transcript; treat the `250 2.0.0 ... Message accepted for delivery` after DATA as success. Example:
+`from` defaults to `<staff-email>`. The script prints the full SMTP transcript; treat the `250 2.0.0 ... Message accepted for delivery` after DATA as success. Example:
 
 ```
-php .../scripts/send_email.php ccha23@cityu.edu.hk "hi" "hi"
+php .../scripts/send_email.php <student-email> "hi" "hi"
 ```
 
 ## How the send works (for ad-hoc variants)
 
-1. `stream_socket_client("tcp://smtp.cs.cityu.edu.hk:587", $err, $errstr, 10)`; `stream_set_timeout($conn, 15)`.
+1. `stream_socket_client("tcp://<smtp-host>:587", $err, $errstr, 10)`; `stream_set_timeout($conn, 15)`.
 2. Read a reply by looping `fgets` until a line whose **4th character is a space** (`250-…` = more lines, `250 …` = end of reply).
 3. Send: greeting → `EHLO cs1302a.cityu.local` → `MAIL FROM:<from>` (expect `250`) → `RCPT TO:<to>` (expect `250`) → `DATA` (expect `354`) → headers + body + `\r\n.\r\n` (expect `250 2.0.0`) → `QUIT`.
 4. Headers: `From`, `To`, `Subject`, `Message-ID` (uniqid), `Date: date('r')`, `MIME-Version: 1.0`, `Content-Type: text/plain; charset=UTF-8`.
@@ -58,7 +58,7 @@ For quiz non-submission / missed-deadline emails to students: **firm — no symp
 
 - **Don't burn time on Moodle-native sending in this build** — no PHPMailer (no vendor/), no core mail classes, dead local sendmail. The old skill's PHPMailer recipe is dead on arrival here.
 - **"Accepted for delivery" ≠ in inbox** — it means the relay queued it. Same-domain plain text usually lands in seconds, but the recipient's spam/junk filter is the one variable not visible from here. Tell the user that checking the inbox is the final confirmation.
-- **Keep From within `cityu.edu.hk`** (e.g. the admin mailbox) — arbitrary/external From addresses risk the relay rejecting or spam-flagging the message.
+- **Keep From within `<domain>`** (e.g. the admin mailbox) — arbitrary/external From addresses risk the relay rejecting or spam-flagging the message.
 - **Batch sends** (quiz reminders): send per recipient with a small delay; the relay may rate-limit. Get addresses from `mdl_user.email` and confirm each `RCPT TO` returns `250 2.1.5 ... Recipient ok` (a `550` = unknown address).
 - **Lint a freshly-generated batch script BEFORE running it.** When a PHP sender is written via an editor/patch tool, escape/tab/quote characters can get mangled (a log-writer line losing its closing quote or getting raw tabs injected into the string is a real, recurring incident). A parse error makes `php` exit silently with code 255 — no output, no SMTP connection, no log file. Always `php -l <file>` and re-read the exact bytes of any line containing `\t`, quotes, or escapes before executing.
 - **Answering "have you sent the email?":** the batch script opens its log file at start, before any SMTP I/O — so the log file's ABSENCE proves the script never ran and nothing was sent (absence is proof of no-send; only the presence of the log + a 250 qid is proof of sent). Never claim a send based on intent; verify log file + queue IDs first, and re-run only after `php -l` is clean.

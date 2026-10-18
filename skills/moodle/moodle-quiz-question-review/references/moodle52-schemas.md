@@ -1,6 +1,6 @@
 # Moodle 5.2 question-engine schemas & CodeRunner execution semantics
 
-Verified on dive.cs.cityu.edu.hk, Moodle 5.2.1 (version 2026042001). The 5.2
+Verified on <moodle-host>, Moodle 5.2.1 (version 2026042001). The 5.2
 question engine is **reworked** vs 3.x/4.x — several tables/columns are renamed
 or absent. Do NOT guess; probe `information_schema.columns` first.
 
@@ -109,7 +109,7 @@ timemodified, createdby, modifiedby`
 | combinator | `iscombinatortemplate=1` | template iterates `TESTCASES`; order = **testcode THEN student answer** |
 
 Dummy student for Twig rendering: firstname `John`, lastname `SMITH`,
-email `john_smith@my.cityu.edu.hk`. `STUDENT.lastname` is UPPERCASED by the
+email `<student-email>`. `STUDENT.lastname` is UPPERCASED by the
 `|upper` filter in some questions — replicate that.
 
 ## EqualityGrader (default grader) exact rule

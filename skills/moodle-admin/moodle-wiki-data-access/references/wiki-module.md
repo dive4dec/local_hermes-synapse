@@ -49,7 +49,7 @@ $vers = $DB->get_records('wiki_versions', ['pageid' => $page->id]);
 
 ## Verifying in the UI (login-gated site)
 
-`dive.cs.cityu.edu.hk` is LTI-login-gated: any unauthenticated `curl` of a course URL 303s to `login/index.php` (or 404s "Error"). Don't burn time probing URL variations. Verify server-side instead:
+`<moodle-host>` is LTI-login-gated: any unauthenticated `curl` of a course URL 303s to `login/index.php` (or 404s "Error"). Don't burn time probing URL variations. Verify server-side instead:
 
 ```php
 define('CLI_SCRIPT', true);

@@ -1,5 +1,5 @@
 <?php
-// Batch ESMTP sender for the pod relay (smtp.cs.cityu.edu.hk:587, no auth).
+// Batch ESMTP sender for the pod relay (<smtp-host>:587, no auth).
 // KNOWN-GOOD — proven in production (13/13 delivered, 2026-09-28).
 //
 // SETUP: edit $recipients, $subject, bodyFor(), $logf.
@@ -8,14 +8,14 @@
 // The log file is opened BEFORE any socket I/O: its absence proves the
 // script never ran (answer to "did you send it?": no).
 
-$HOST='smtp.cs.cityu.edu.hk'; $PORT=587;
-$from='chung.chan@cityu.edu.hk'; $fromName='Chung Chan';
+$HOST='<smtp-host>'; $PORT=587;
+$from='<staff-email>'; $fromName='<Instructor-Name>';
 $subject='SUBJECT HERE';
 $logf='/tmp/batch_send_log.txt';
 
 // [uid, first_name, lab_section, email] — uid is for your own audit trail.
 $recipients = [
-  [123, 'First', 'T02', 'student-c@my.cityu.edu.hk'],
+  [123, 'First', 'T02', '<student-email>'],
 ];
 
 function bodyFor($first, $lab) {
@@ -23,7 +23,7 @@ function bodyFor($first, $lab) {
    . "Body line one.\n"
    . "Body line two ($lab section).\n\n"
    . "Regards,\n"
-   . "Chung Chan\n";
+   . "<Instructor-Name>\n";
 }
 
 function readReply($c) {
@@ -54,7 +54,7 @@ foreach ($recipients as $i => $r) {
     "From: $fromName <$from>",
     "To: $toName <$to>",
     "Subject: $subjectB64",
-    'Message-ID: <'.uniqid('cs1302a',true).'@cs1302a.cityu.edu.hk>',
+    'Message-ID: <'.uniqid('cs1302a',true).'@cs1302a.<domain>>',
     'Date: '.date('r'),
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=UTF-8',

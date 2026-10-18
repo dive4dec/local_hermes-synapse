@@ -102,7 +102,7 @@ Run with: `php /tmp/send-email.php 2>&1`
 - **Must boot Moodle framework:** Include `config.php` with `CLI_SCRIPT` defined to access `$CFG` settings. Don't query the DB directly — DB password is tricky and connection may be denied from the pod's IP.
 - **`email_to_user_addr()` doesn't exist in Moodle 5.2:** The old email function was removed. Use PHPMailer directly.
 - **`core\email\manager` doesn't exist:** Moodle 5.2 uses a different email system. PHPMailer is the reliable approach.
-- **Empty noreplyaddress:** If the user clears the noreply address in the admin UI, `$CFG->noreplyaddress` becomes an empty string (not a default). You must fall back to something like `noreply@dive.cs.cityu.edu.hk` derived from `wwwroot`. PHPMailer will reject an empty from address.
+- **Empty noreplyaddress:** If the user clears the noreply address in the admin UI, `$CFG->noreplyaddress` becomes an empty string (not a default). You must fall back to something like `noreply@<moodle-host>` derived from `wwwroot`. PHPMailer will reject an empty from address.
 - **SMTP password:** `$CFG->smtppass` is the plaintext password (not base64) when accessed through the Moodle framework. Only `config.php` has base64-encoded DB passwords.
 - **`SMTPDebug = 2`** gives verbose SMTP transcript — essential for diagnosing failures. Set to `0` for production.
 - **Scripts go in `/tmp/`:** Always write temporary PHP scripts to `/tmp/` to avoid polluting the Moodle filesystem.

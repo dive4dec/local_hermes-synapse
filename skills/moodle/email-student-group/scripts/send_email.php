@@ -9,9 +9,9 @@ error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
 // ===== ADAPT THESE for your campus =====
-$host = getenv('SMTP_HOST') ?: 'smtp.cs.cityu.edu.hk';
+$host = getenv('SMTP_HOST') ?: '<smtp-host>';
 $port = (int)(getenv('SMTP_PORT') ?: 587);
-$defaultFrom = getenv('SMTP_FROM') ?: 'chung.chan@cityu.edu.hk';
+$defaultFrom = getenv('SMTP_FROM') ?: '<staff-email>';
 $ehloName = getenv('EHLO_HOST') ?: 'your-campus.local';
 $domainForMessageId = $ehloName;
 // =======================================

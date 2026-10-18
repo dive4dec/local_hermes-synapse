@@ -1,4 +1,4 @@
-# Activity Completion Mechanics (Moodle 5.x, dive.cs.cityu.edu.hk)
+# Activity Completion Mechanics (Moodle 5.x, <moodle-host>)
 
 Verified 2026-08-28 from code (`completion/classes/form/form_trait.php`,
 `lib/completionlib.php`, `mod/quiz/lib.php`, `mod/quiz/classes/completion/custom_completion.php`)

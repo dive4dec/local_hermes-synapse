@@ -13,7 +13,7 @@ activity comparison per student, and individualized urgent emails.
 The agent's Moodle identity can be stale: `$HERMES_HOME/.moodle_identity` is
 last-writer-wins and any other admin's LTI chat overwrites it. Before ANY
 attribution-sensitive action (sending messages/email as the teacher, grading):
-- `moodle_get_my_courses` → confirm the expected account (e.g. Chung Chan, uid 494).
+- `moodle_get_my_courses` → confirm the expected account (e.g. <Instructor-Name>, uid 494).
 - If wrong: write the per-session file
   `$HERMES_HOME/run/identity/$HERMES_SESSION_KEY.identity.json` as
   `{"username":"<LTI username>","userid":"<id>"}` AND fix the legacy
@@ -136,7 +136,7 @@ Instructor rules (2026-09-24, after two corrections — do not regress):
 - Urgent tone, factual, signed with the instructor's name.
 
 Send via the `email-student-group` / `campus-smtp-email` skills (raw ESMTP to
-`smtp.cs.cityu.edu.hk:587`, From `chung.chan@cityu.edu.hk`), one private email
+`<smtp-host>:587`, From `<staff-email>`), one private email
 per recipient, check `emailstop` first, ~1s pacing, collect `250 2.0.0 <queueid>`
 lines. Present the drafts and get explicit confirmation before sending.
 

@@ -1,6 +1,6 @@
 ---
 name: moodle-quiz-attempt-inspection
-description: "Inspect quiz attempts on dive.cs.cityu.edu.hk (Moodle 5.x): count attempts by state, track in-progress attempts with last-activity liveness, and cross-check sessions/IPs during live quiz sessions."
+description: "Inspect quiz attempts on <moodle-host> (Moodle 5.x): count attempts by state, track in-progress attempts with last-activity liveness, and cross-check sessions/IPs during live quiz sessions."
 ---
 
 # Moodle Quiz Attempt Inspection
@@ -187,4 +187,4 @@ foreach ($rows as $r) { echo date('m-d H:i:s', $r->timecreated), ' ', $r->eventn
 ## Reference (cs1302a_26a, course id=3)
 
 - CE-Quiz 1 = quiz 58: 5 questions, `timelimit=2700`, `attempts=1`. Group sizes: T03=65, T01=59, T02=69, TA1=10, helpers=22.
-- Ziyu ZHUANG (uid 726, LTI) is a non-editing teacher — her attempts are legitimate.
+- <student-A> (uid 726, LTI) is a non-editing teacher — her attempts are legitimate.

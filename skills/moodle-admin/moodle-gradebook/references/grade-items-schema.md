@@ -1,4 +1,4 @@
-# Verified column lists — gradebook + choicegroup (Moodle 5.x, dive.cs.cityu.edu.hk)
+# Verified column lists — gradebook + choicegroup (Moodle 5.x, <moodle-host>)
 
 Probed 2026-08-27 via MCP `SHOW COLUMNS` (read-only). The PHP bootstrap's
 `get_records`/`get_columns` fail with a bare "Error reading from database" on

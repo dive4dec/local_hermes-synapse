@@ -47,4 +47,4 @@ A `function(){ return $local; }` at the top of a CLI script saw `$local` as unde
 - `mdl_quiz_attempts` has **no `grade`** column; use `sumgrades` (question scale). `mdl_quiz.grade` is the display max, NOT the sum of question marks — derive the true max from `SUM(maxmark)` over graded `question_attempts`.
 - `mdl_question_attempts` keys questions by `slot` within a `questionusageid`; slot 1 is usually an info page.
 - `mdl_user`: `emailstop=1` means the user opted out of email (check before blasting). `mdl_logstore_standard_log` columns include `timecreated, ip, eventname, courseid, component, action` (no `remoteaddr`, no `event`).
-- `mdl_config` site rows: SMTP relay = `smtp.cs.cityu.edu.hk:587` (`smtphosts`), no auth/credentials; sender `chung.chan@cityu.edu.hk`. (See `campus-smtp-email` skill.)
+- `mdl_config` site rows: SMTP relay = `<smtp-host>:587` (`smtphosts`), no auth/credentials; sender `<staff-email>`. (See `campus-smtp-email` skill.)

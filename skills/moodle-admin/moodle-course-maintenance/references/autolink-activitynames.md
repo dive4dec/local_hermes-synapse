@@ -38,7 +38,7 @@ This bites in two task classes:
 
 ## Empirical before/after verification (the reliable check)
 
-`dive.cs.cityu.edu.hk` is login-gated (anonymous curl → login), so you cannot scrape the
+`<moodle-host>` is login-gated (anonymous curl → login), so you cannot scrape the
 rendered page. The decisive check is to render the stored text through Moodle's own filter
 chain in a CLI script. **You MUST pass a module (or course) context AND have a logged-in
 user** — the activitynames filter does `$context->get_course_context(false)` and returns the

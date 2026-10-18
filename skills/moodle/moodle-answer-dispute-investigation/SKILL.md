@@ -19,7 +19,7 @@ Environment: this box is a Moodle 5.x fork (dive/socratic, cs1302a_26a = course
 
 ## Step 0 — pin the three identities (skipping this costs a full wasted run)
 1. **Student**: `mdl_user` by firstname+lastname. LTI usernames are opaque
-   (`enrol_lti<hex>`); emails look like `<initials><n>-c@my.cityu.edu.hk`.
+   (`enrol_lti<hex>`); emails look like `<initials><n>-c@<student-domain>`.
    Disambiguate by surname — there are multiple LAU Tsz *Ying*/Tsz *Long* etc.
 2. **Quiz**: `mdl_quiz` by name **AND course**. ⚠️ Parallel course instances exist:
    course 2 and course 6 each carry their own "E-Quiz 4"/"CE-Quiz 4" (e.g. quiz 26

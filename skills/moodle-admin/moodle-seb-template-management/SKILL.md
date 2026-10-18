@@ -1,6 +1,6 @@
 ---
 name: moodle-seb-template-management
-description: "Bulk-standardize SEB (Safe Exam Browser) template config across quizzes on dive.cs.cityu.edu.hk (Moodle 5.x): what template mode actually generates, the allowuserquitseb NULL trap, the required 3-cache purge, and post-change config verification. Use when switching a course's quizzes to a different SEB template (e.g. enabling URL filtering 'like quiz X'), when students report missing/mismatched SEB config after a template change, or when checking what SEB config a quiz will serve."
+description: "Bulk-standardize SEB (Safe Exam Browser) template config across quizzes on <moodle-host> (Moodle 5.x): what template mode actually generates, the allowuserquitseb NULL trap, the required 3-cache purge, and post-change config verification. Use when switching a course's quizzes to a different SEB template (e.g. enabling URL filtering 'like quiz X'), when students report missing/mismatched SEB config after a template change, or when checking what SEB config a quiz will serve."
 ---
 
 # SEB Template Management (bulk standardization, Moodle 5.x)
