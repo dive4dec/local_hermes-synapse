@@ -201,7 +201,7 @@ request is a layered decision, not a single patch. Order by risk:
 - Full schema-trap bank: `moodle-php-cli-pitfalls` (esp. §8a/8b/11b + §12).
 
 ## Case files
-- **references/lau-tsz-long-equiz4-2026-09-28.md** — "system added option d"
+- **references/<case-study-excluded>.md** — "system added option d"
   claim on E-Quiz 4 Q3 (infinite loops) — RESOLVED: a transient client-side
   re-render, NOT a server bug and NOT a penalty (final step `gradedright`, full
   marks). The real usage is `quiz_attempts.uniqueid`; the first pass's "snapshot

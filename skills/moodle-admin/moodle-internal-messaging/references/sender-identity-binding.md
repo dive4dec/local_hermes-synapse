@@ -1,7 +1,7 @@
 # Sender identity binding — how the agent's "current" Moodle user is resolved, and how to fix drift
 
 Incident (2026-09-24): an urgent grade message to a student in <coursecode> was delivered
-"from <Staff-Zhao> (uid 495)" instead of the room owner <Instructor-Name> (uid 494). User correction:
+"from <Staff-D> (uid 495)" instead of the room owner <Instructor-Name> (uid 494). User correction:
 "Strange, this agent should be bound to the account <Instructor-Name>." The message had already
 been sent, so it was re-attributed in place. This file captures the mechanism + both recipes.
 
@@ -25,7 +25,7 @@ been sent, so it was re-attributed in place. This file captures the mechanism + 
 
 - **<Instructor-Name> — uid 494**, LTI username `enrol_lti3362f10548e1f10d602bdbe336bed8b4dd080fef`.
   Owner of the Matrix room "EQuiz <coursecode>-26a" — the expected bound account.
-- **<Staff-Zhao> — uid 495**, LTI username `enrol_lti34461258b45ef7082df58c61d76610bd0e62b159`
+- **<Staff-D> — uid 495**, LTI username `enrol_lti34461258b45ef7082df58c61d76610bd0e62b159`
   (also editingteacher on course <cid>).
 - Both hold editingteacher; the role does NOT identify the owner. Compare against the
   room owner, not against "the teacher I remember".
