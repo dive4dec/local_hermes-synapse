@@ -39,7 +39,7 @@ Student-facing AI feature on <moodle-host> (Moodle 5.2.1): an **AI features** bu
 
 Provider-side "Something went wrong" (cURL/HTTP-blocking the AI provider) is a different class — see skill `moodle-curl-security-for-ai`.
 
-## Student-content preferences (Dr. Chan)
+## Student-content preferences (<Instructor-C>)
 
 - Do **not** name the Moodle version (e.g. "Moodle 5.2") in student-facing AI text — version-specific docs aren't useful to students.
 - Descriptions must match the actual UI: whole-page content, immediate generation, **AI features** dropdown. Never say "select the text" or "click Generate".

@@ -103,5 +103,5 @@ Always run `moosh -n cache-clear` AFTER the PHP script's own cache purge.
 - **Stale teacher-group (g91) overrides break the cover page for teachers only** — the cover page resolves the most specific override, so a leftover g91 row (e.g. 2025 dates from a restore) makes E-Quiz/CE-Quiz cover pages show the wrong date for u494/u495 while global settings and all students show the correct window. Audit pattern: `quiz_overrides` joined to course-3 quizzes with `groupid=91 OR userid>0`. Fix = backup + delete the stale rows + `purge_caches()` + `moosh -n cache-clear` (2026-10-05, overrides 409/431/453/475/497/519 on E-Quiz 4-9).
 - **Always run `moosh -n cache-clear` after PHP script** — the script's `cache_helper::purge_by_event()` alone is insufficient.
 - **Catch-up weeks** — Week 5 has no Thu, Week 6 has no Thu, Week 7 has no Thu. CE3/4/5 Thursday sessions shift to the following week's Thursday.
-- **LB2/LC2 are on Wednesday, not Thursday** — they are with XU Weitao's Wednesday 12:00 session.
+- **LB2/LC2 are on Wednesday, not Thursday** — they are with <Staff-B>'s Wednesday 12:00 session.
 - **Use Moodle PHP API, not raw SQL** — always bootstrap with `define('CLI_SCRIPT', TRUE)` and `require_once('/var/www/html/config.php')`.

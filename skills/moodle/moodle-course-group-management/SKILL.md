@@ -69,8 +69,8 @@ Active lab groups taught by course instructors only:
 
 | Instructor | Groups |
 |---|---|
-| Dr. DONG, Minjing | CB1, CC1, LB1, LC1, LB3, LC3, LB4 |
-| Dr. XU, Weitao | CA1, LA1, LA2, LA3, LA4, LB2, LC2 |
+| <Instructor-A> | CB1, CC1, LB1, LC1, LB3, LC3, LB4 |
+| <Instructor-B> | CA1, LA1, LA2, LA3, LA4, LB2, LC2 |
 
 Other: helpers (unlimited attempts). T\* tutorial groups and stale groups (CD\*, CE\*, LD\*, LE\*, LH5, LG5, LF5, CH1, CF1, CG1) have been removed.
 

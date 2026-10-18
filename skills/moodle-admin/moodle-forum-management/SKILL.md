@@ -105,5 +105,5 @@ Recurring user request: review all course forums and surface student posts with 
 - **Site admins have no course role assignments** — a staff set built purely from level-50 non-student role assignments misses the admin's own posts (see reply-check workflow step 3).
 - `mdl_forum_subscriptions` has only `id, userid, forum, preference` — per-user-per-forum, no per-discussion subscription column to copy.
 - Copy `usermodified` (not just `userid`) on the discussion row — the listing's "last posted by" JOIN uses it.
-- FAQ posts in these courses are authored by user 2 (Dr Chan); keep `userid=2` on copies so they stay in his authorship.
+- FAQ posts in these courses are authored by user 2 (<Instructor-C>); keep `userid=2` on copies so they stay in his authorship.
 - When fixing wording in a post, update it in ALL courses that carry the copy — then `moosh -n cache-clear`.
