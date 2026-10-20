@@ -45,8 +45,9 @@ is preserved as `moodle_quiz_downloader_tool.py.selenium.bak`.)
 
 ## Setup (one-time, only if the tool will not run)
 
-    cd $HERMES_HOME/skills/moodle-auto-download/scripts
-    sudo ./install_deps.sh
+   cd $HERMES_HOME/skills/moodle-auto-download/scripts
+   chmod +x ./install_deps.sh
+   ./install_deps.sh
 
 Dependencies: `requests` and `websocket-client` only. No Selenium, no
 chromedriver, no database access.

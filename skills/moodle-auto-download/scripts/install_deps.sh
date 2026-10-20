@@ -1,40 +1,53 @@
 #!/bin/sh
-# Exit immediately if a command exits with a non-zero status
+# Exit immediately upon encountering an error
 set -e
 
-echo "Updating apk repositories..."
-apk update
-
-echo "Installing Python and networking dependencies..."
-# The Python script requires Python 3, requests, and websocket-client. 
-# socat is installed for CDP port tunneling.
-apk add python3 py3-requests py3-websocket-client socat
-
-echo "Installing Chromium..."
-# The script requires a Chromium/Chrome binary to launch headless browser sessions.
-apk add chromium
-
-echo "Configuring www-data user..."
-# Alpine does not have www-data by default; we must create it.
-if ! id -u www-data > /dev/null 2>&1; then
-    addgroup -g 82 -S www-data
-    adduser -u 82 -D -S -G www-data www-data
-    echo "Created www-data user and group."
-fi
-
-echo "Installing and configuring PHP-FPM..."
-# Install standard PHP-FPM
-apk add php-fpm
-
-# Update the PHP-FPM www.conf file to drop privileges to www-data.
-# PHP-FPM's main service runs as root, but worker processes will run as www-data.
-FPM_CONF=$(find /etc/php* -name "www.conf" | head -n 1)
-if [ -n "$FPM_CONF" ]; then
-    echo "Updating PHP-FPM configuration in $FPM_CONF..."
-    sed -i 's/^user = .*/user = www-data/' "$FPM_CONF"
-    sed -i 's/^group = .*/group = www-data/' "$FPM_CONF"
+# 1. Dynamic privilege escalation logic: use `sudo` only if the user is not `root` and `sudo` is present on the system.
+if [ "$(id -u)" -ne 0 ]; then
+    if command -v sudo >/dev/null 2>&1; then
+        SUDO="sudo"
+    else
+        echo "Error: Executing this script requires root privileges or the sudo command." >&2
+        exit 1
+    fi
 else
-    echo "Warning: PHP-FPM www.conf not found. Manual configuration required."
+    SUDO=""
 fi
 
-echo "All dependencies installed and configured successfully!"
+# 2. Automatically detect the package manager and install dependencies
+if command -v apk >/dev/null 2>&1; then
+    echo "Alpine Linux (apk) environment detected..."
+    $SUDO apk update
+    echo "Installing Python, network tools, Chromium, and PHP-FPM..."
+    $SUDO apk add --no-cache python3 py3-requests py3-websocket-client socat chromium php-fpm
+
+    echo "Configuring www-data user..."
+    # Alpine does not have a `www-data` user by default; it must be created manually.
+    if ! id -u www-data > /dev/null 2>&1; then
+        $SUDO addgroup -g 82 -S www-data
+        $SUDO adduser -u 82 -D -S -G www-data www-data[cite: 2]
+        echo "Successfully created www-data user and group."
+    fi
+
+elif command -v apt-get >/dev/null 2>&1; then
+    echo "Ubuntu/Debian (apt-get) environment detected..."
+    $SUDO apt-get update
+    echo "Installing dependencies..."
+    $SUDO apt-get install -y python3 python3-requests python3-websocket socat chromium-browser php-fpm
+else
+    echo "Error: No supported package manager found (only apk or apt-get are supported)." >&2
+    exit 1
+fi
+
+# 3. Standardize PHP-FPM Execution Permissions
+echo "Configuring PHP-FPM..."
+FPM_CONF=$(find /etc/php* /etc/php -name "www.conf" 2>/dev/null | head -n 1)
+if [ -n "$FPM_CONF" ]; then
+    echo "Updating configuration file: $FPM_CONF..."
+    $SUDO sed -i 's/^user = .*/user = www-data/' "$FPM_CONF"
+    $SUDO sed -i 's/^group = .*/group = www-data/' "$FPM_CONF"
+else
+    echo "Warning: PHP-FPM www.conf not found; please verify the configuration manually."
+fi
+
+echo "All dependencies installed and configured!"
