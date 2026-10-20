@@ -1,6 +1,6 @@
 <?php
 define('CLI_SCRIPT', TRUE);
-require_once('/var/www/html/public/config.php');
+require_once('<webroot>/config.php');
 require_once($CFG->libdir . '/tcpdf/tcpdf.php');
 global $DB;
 
@@ -177,6 +177,6 @@ foreach ($questions as $q) {
     $qnum++;
 }
 
-$out = '/var/www/moodledata/.hermes/cron/output/irat1_cs2310.pdf';
+$out = '<datadir>/.hermes/cron/output/irat1_cs2310.pdf';
 $pdf->Output($out, 'F');
 echo "PDF created: $out (" . filesize($out) . " bytes)\n";

@@ -1,7 +1,106 @@
+/usr/bin/bash: _parse_usage: line 16: syntax error near unexpected token `('
+/usr/bin/bash: _parse_usage: line 16: ` -?(\[)+([a-zA-Z0-9?]))'
+/usr/bin/bash: error importing function definition for `_parse_usage'
+/usr/bin/bash: _longopt: line 6: syntax error near unexpected token `('
+/usr/bin/bash: _longopt: line 6: ` --!(no-*)dir*)'
+/usr/bin/bash: error importing function definition for `_longopt'
 # Changelog
 
 All notable changes to `local_hermes-synapse` are documented here.
 Format is based on [Keep a Changelog](https://keepachangelog.com/).
+
+---
+
+## [Unreleased]
+
+### Added — Portable skill port (2026-10-18)
+
+**59 skills** ported from a live Moodle pod, generalised to be **hermetic,
+secret-free, and course-agnostic**. New skills / files:
+
+- **`skills/mhs-setup/`** — meta-skill that bootstraps the whole set: detects
+  the Moodle version, gates on **5.2+** (floor `2026042000`), derives `MHS_*`
+  env vars from `config.php` / the DB (read-only `mhs_probe.php`), and persists
+  them conflict-aware + idempotently (`mhs_env.sh`). Re-runnable after merging
+  updated skills.
+- **`skills/_conventions/PORTABLE.md`** — single source of truth for the `MHS_`
+  env-var scheme, the read→default→ask→persist contract, the version gate, the
+  token→env mapping, and the incremental-merge rules.
+
+### Changed — generalisation + PII scrub
+
+- **`MHS_` env-var scheme** introduced. Course/site-specific values now read
+  from env vars (never hardcoded):
+  - course codes `cs1302*` → `<coursecode>` / `<other-coursecode>` / `<course>`
+  - numeric course ids → `<cid>` / `<other-coursecid>`
+  - helpers group id → `<helpergid>`
+  - `/var/www/html/public` → `<webroot>`, `/var/www/moodledata` → `<datadir>`
+  - lab/campus/public IP ranges → `<lab-cidr>` / `<campus-cidr>` / `<private-ranges>`
+- **PHP scripts** now carry an env bootstrap (`$WEBROOT`/`$DATA_DIR`/`$CID`/`$QUIZ`
+  from `MHS_*` with standard defaults) so they remain executable while portable.
+- **PII scrubbed** across all ported skills: real personal emails, student/instructor
+  names, staff identities, and the operator hostname (`<moodle-host>`,
+  `<smtp-host>`, `<staff-email>`, `<student-email>`, `<Instructor-Name>`,
+  `<Staff-D>`, `<staff-github>`, `<student-domain>`, `<domain>`). Synthetic
+  test-account identifiers (`LTITEST`, `@example.com`) retained (not PII).
+- **Case-study reference files excluded** (individual-incident narratives
+  containing real student PII).
+
+### Removed
+
+- **`moodle_quiz_audit` skill** deliberately **not ported** — it was already
+  superseded by the in-repo `moodle_audit_quiz` **plugin tool** (see 0.2.2)
+  because the skill had a concurrency bug. The 59 ported skills do not include it.
+
+### Rollback
+
+Each phase is one git commit on branch `portable-port`; rollback any phase with
+`git revert <commit>`:
+`09ae00f` (copy), `6460b8b` + `7361984` (PII), `d9b9b48` (generalise),
+`5117f96` (mhs-setup). Baseline anchor: `3f0959d`.
+
+## [0.2.2] — 2026-08-21
+
+### Added
+
+#### moodle-bridge plugin: `moodle_audit_quiz` tool (in-process DB audit)
+New in-process plugin tool that replaces the old `moodle_quiz_audit` **skill**.
+It runs entirely on the Moodle database (no HTML scraping, no child process, no
+session cookie), so the per-session concurrency race that broke the skill (a
+terminal child inherits a stale process-global `HERMES_SESSION_KEY` under
+concurrency) is **structurally impossible** — the tool never spawns a process
+and never reads a per-session env file.
+
+- **Fast-completion check** (AI-misuse signal): flags attempts where
+  `timefinish - timestart < fast_mins` AND `grade_pct >= fast_score`.
+  Defaults `fast_mins=10`, `fast_score=80`.
+- **Off-campus IP check**: pulls each attempt's IP(s) from `logstore_standard_log`
+  (`attempt_viewed`/`attempt_updated`/`attempt_submitted`, joined on
+  `objectid = quiz_attempts.id`), then flags attempts with `campus_ips` set if
+  **any** observed IP is outside all listed CIDRs. `campus_ips` is an optional
+  param/env (CIDR list) — **not hard-coded**; when unset the tool just lists
+  the IPs and flags nothing (the admin judges on campus vs off-campus).
+- **Authorisation**: restricted to staff (manager/teacher role at the course's
+  or site context). Students are denied. Role matching is naming-robust
+  (handles standard `editing teacher` and this site's `editingteacher`).
+- Returns structured JSON (attempts, flags, SEB access-blocks, a logstore
+  retention-window note).
+
+### Removed
+
+#### moodle_quiz_audit skill
+Deleted (repo + deployed NFS). Its HTML-scraping approach was over-engineered
+(the same data is queryable in the DB) and its child-process path was
+unreliable under concurrent admin sessions. Superseded by the
+`moodle_audit_quiz` plugin tool above.
+
+### Notes
+- **Plugin version bump 1.0.1 → 1.1.0** (`plugins/moodle-bridge/plugin.yaml`): the
+  version field is display-only (the hermes installer never compares it), so this
+  is purely so the dashboard can distinguish pre/post-audit-tool deployments.
+- **Log retention**: attempt IPs live only as long as the logstore retains rows
+  (currently a ~70-day window). Fast-completion data lives in `quiz_attempts`
+  (kept indefinitely). IP audits should be run soon after a quiz.
 
 ---
 

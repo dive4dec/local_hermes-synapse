@@ -9,7 +9,7 @@ set -e
 
 DOMPDF_VERSION="3.1.5"
 DOMPDF_URL="https://github.com/dompdf/dompdf/releases/download/v${DOMPDF_VERSION}/dompdf-${DOMPDF_VERSION}.zip"
-HERMES_HOME="${HERMES_HOME:-/var/www/moodledata/.hermes}"
+HERMES_HOME="${HERMES_HOME:-<datadir>/.hermes}"
 DOMPDF_DIR="${HERMES_HOME}/lib/dompdf"
 
 if [ -f "${DOMPDF_DIR}/vendor/autoload.php" ]; then
