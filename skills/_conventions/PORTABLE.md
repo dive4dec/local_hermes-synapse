@@ -1,3 +1,9 @@
+/usr/bin/bash: _parse_usage: line 16: syntax error near unexpected token `('
+/usr/bin/bash: _parse_usage: line 16: ` -?(\[)+([a-zA-Z0-9?]))'
+/usr/bin/bash: error importing function definition for `_parse_usage'
+/usr/bin/bash: _longopt: line 6: syntax error near unexpected token `('
+/usr/bin/bash: _longopt: line 6: ` --!(no-*)dir*)'
+/usr/bin/bash: error importing function definition for `_longopt'
 # Portable-skill conventions (`MHS_`)
 
 This file is the single source of truth for how every skill in this repo is
@@ -18,6 +24,7 @@ user environment. The *variable names* never contain a course name; only the
 | `MHS_COURSE_ID` | Numeric Moodle course id (the `$courseid` used everywhere) | — | **ask the user** |
 | `MHS_COURSE_CODE` | Course short-name string (e.g. `<coursecode>`) | — | **ask the user** |
 | `MHS_HELPER_GROUP_ID` | Id of the "helpers"/exam group (excluded from student counts) | — | **ask the user** |
+| `MHS_CODE_RUNNER_PROTOTYPE` | Name of the Code Runner `python3` prototype question (e.g. `python3_<coursecode>_prototype`) | `python3_cs1302_prototype` | ask if your instance differs |
 | `MHS_WEBROOT` | Moodle PHP filesystem webroot | `<webroot>` | ask if wrong |
 | `MHS_WWWROOT` | Full HTTP base incl. sub-path, e.g. `https://host/codename` | — | **ask the user** |
 | `MHS_DATA_DIR` | `moodledata` directory | `<datadir>` | ask if wrong |

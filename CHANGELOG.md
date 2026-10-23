@@ -13,6 +13,35 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — coderunner-question-creation (2026-10-23)
+
+**`skills/moodle/coderunner-question-creation/`** — create Code Runner
+(python3) questions for mock exams / quizzes. Ported from the live course pod,
+PII-scrubbed and generalised like the rest of the set:
+
+- `SKILL.md` — two question "generations", three-table anatomy, versioning
+  model (live = max `question_versions.version` per bank entry), headless
+  creation paths (hand-authored XML import + `save_question`), bulk
+  generator-verify-emit, and the build's modified-schema gotchas.
+- `references/headless-creation-recipe.md` — CLI bootstrap `require`s,
+  `save_question` alternative, canonical insert order, stored shape of a
+  mimic-target question, verification checklist.
+- `references/xml-import-recipe.md` — the verified two-stage import
+  (parse-only → import) PHP sequence + full worked XML + field contract.
+- `templates/bulk_question_generator.py` — generator-verify-emit skeleton
+  (question data → real-Python verification of every answer/test → XML).
+  Now env-driven: `MHS_CODE_RUNNER_PROTOTYPE` (default
+  `python3_cs1302_prototype`) and `MHS_WEBROOT`.
+
+Concretely course-specific values (category/context/question/CMID ids, the
+prototype name, the bank-author uid) are expressed as `<token>`s with the
+reference instance's value noted inline as `(ref N)` so the skill stays
+actionable without baking in one course's data. New env var
+`MHS_CODE_RUNNER_PROTOTYPE` registered in `_conventions/PORTABLE.md`.
+The two dated case-study references (`mockexam-bank-25-26.md`,
+`bulk-creation-run-2026-10-22.md`) were **not** ported (PII / course-locked
+worked data).
+
 ### Added — Portable skill port (2026-10-18)
 
 **59 skills** ported from a live Moodle pod, generalised to be **hermetic,
