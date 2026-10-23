@@ -8,6 +8,26 @@ Hermes skills and plugins for the local_hermesagent Moodle integration. "Synapse
 
 ---
 
+## Why this exists
+
+A **self-learning agent inside an LMS** changes who "owns" the LMS. Instead of a
+fixed set of features, the agent's *synapse* — its memory plus the skills you give
+it — can **grow**. A teacher can keep training it with new skills, so it learns the
+LMS itself and then carries out **course-specific** tasks on the teacher's behalf:
+
+- **Summarising student performance** and spotting patterns across a quiz or a whole course.
+- **Identifying students who need help** (attempts they gave up on, off-campus access, AI-misuse signals, absences).
+- **Building new teaching materials** — exercises, mock exams, and Code Runner programming questions for *any* quiz activity (practice or assessment).
+- **Automating tedious admin** — drafting and sending emails to students or whole groups, checking and fixing issues by reading logs and running scripts, maintaining groups, quiz overrides, grades, and content.
+
+The goal is that a teacher can **be the administrator of their own LMS and adapt it to
+their teaching without deep technical background** — describing what they want in
+plain language, and having the agent do the work with the skills in this repo as its
+playbook. This repo is that playbook: 61 portable, course-agnostic skills (plus the
+`moodle-bridge` plugin) that the agent reads and acts on.
+
+---
+
 ## What's in here
 
 ```
@@ -62,7 +82,7 @@ Version-gates on Moodle 5.2+, auto-derives `MHS_*` env vars from `config.php`/DB
 | `moodle-cross-quiz-cohort` | Who attempted quiz X but NOT quiz Y |
 | `moodle-equiz-student-status` | Three student-status cohorts for an LTI-enrolled quiz |
 | **Code Runner** | |
-| `coderunner-question-creation` | Author new Code Runner (python3) questions for mock exams |
+| `coderunner-question-creation` | Author new Code Runner (python3) questions for any quiz — practice or assessment (mock exams, labs) |
 | `coderunner-prototype-import` | Fix missing prototype errors via direct SQL inserts |
 | `moodle-coderunner-jobe-diagnosis` | Diagnose Code Runner check/precheck slow/frozen/not-working |
 | `moodle-math-delimiter-fix` | Fix broken inline math in Code Runner questions |

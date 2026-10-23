@@ -1,15 +1,15 @@
 ---
 name: coderunner-question-creation
-description: Create Code Runner (python3) questions for mock exams / quizzes in the <coursecode> course bank on this Moodle 5.x fork. Covers where mock-exam questions live (qbank activity + per-exam categories), the two question "generations" (bare-python3/assert vs the <coursecode> prototype style), the three-table anatomy, the versioning model (each edit = a new question row, live = max version per entry), the verified hand-authored-XML import path (single AND bulk — generator-verify-emit), and the build's modified-schema gotchas. Use when asked to "create/add a code runner question" or "write a mock-exam question". Creation verified on the reference course (a new exam category + 19 questions).
+description: Author new Code Runner (python3) questions for any quiz activity — practice or assessment (mock exams, quizzes, labs) — in the course question bank on this Moodle 5.x fork. Covers where questions live (qbank activity + per-exam categories), the two question "generations" (bare-python3/assert vs the course prototype style), the three-table anatomy, the versioning model (each edit = a new question row, live = max version per entry), the verified hand-authored-XML import path (single AND bulk — generator-verify-emit), and the build's modified-schema gotchas. Use when asked to "create/add a code runner question" or "write a question for a quiz or exam". Verified on the reference course (a new category + 19 questions).
 ---
 
-# Code Runner question creation (mock exams / quizzes)
+# Code Runner question creation (practice & assessment)
 
 Build `qtype=coderunner` questions into the course question bank on this Moodle 5.x fork. This box runs `<coursecode>` — two course shells: course `<cid>` = `<coursecode>` (ref code `cs1302a_26a`) and course `<other-cid>` = `<other-coursecode>` (ref code `cs1302_25b`). Distinguish from the siblings: `coderunner-prototype-import` = *repair* a missing prototype; `moodle-quiz-question-review` = *validate* existing questions; this one = *author new* questions.
 
 ## The two "generations" — know which you're building (the key distinction)
 
-Mock-exam questions come in two styles. **Replicate the NEWER one (Sem B) for new work** — it's what the instructor is currently doing.
+Code Runner questions come in two styles. **Replicate the NEWER one (Sem B) for new work** — it's what the instructor is currently doing.
 
 | | Older — e.g. "<coursecode> Exam 25/26 **Sem A**" | Newer — "<coursecode> Exam 25/26 **Sem B**" ← build this |
 |---|---|---|
@@ -20,7 +20,7 @@ Mock-exam questions come in two styles. **Replicate the NEWER one (Sem B) for ne
 
 Both share the same three-table anatomy and versioning model below — only `coderunnertype` and the test representation differ. **Correction from live data (2026-10-22): the current live rows of this course's Sem B cat `<cat-semB>` are mostly ASSERT-BASED** (`testcode` = `assert f(...) == …`, `stdin`/`expected` empty) — only a few (e.g. `print_diamond` (ref q4072), `testcode` = `print_diamond(5)` → `expected` output) use the stdin/expected form. The table above describes the two *styles*, not a per-category guarantee: **mimic the exact test representation of the live row you're duplicating.** The assert form works perfectly with the harness (verified: 18 assert-based questions imported + all answers/tests verified in real Python).
 
-## Where mock-exam questions live
+## Where these questions live
 
 - A **single course-level Question Bank activity** (module `qbank`, `module` id 16 in `mdl_modules`): course `<cid>` = instance `<cid>` / cmid `<qbank-cmid>` / **contextid `<ctx-main>`** (ref: 101 / 609); course `<other-cid>` = instance `<other-cid>` / cmid `<qbank-cmid-other>` / **contextid `<ctx-other>`** (ref: 2 / 18).
 - Inside it, categories are organised **by exam and term** under a `top` category. Course `<cid>` (context `<ctx-main>`): `<coursecode> Exam 25/26 Sem A` = **cat `<cat-semA>`** (ref 116), `<coursecode> Exam 25/26 Sem B` = **cat `<cat-semB>`** (ref 167), plus `<coursecode> Midterm …`, and `makeup` sub-categories. A `CR_PROTOTYPES` category (cat `<cat-proto>` under `<ctx-main>`; cat `<cat-proto-other>` under `<ctx-other>`; ref 221 / 220) holds the prototype.
